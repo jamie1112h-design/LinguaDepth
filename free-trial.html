@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaDepth – Try 5 Free Lessons</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:   #f5f0e8;
+    --parchment2:  #ede7d9;
+    --ink:         #2a1f0e;
+    --teal:        #2f6b6f;
+    --teal-dark:   #1f4d50;
+    --teal-deep:   #163538;
+    --teal-mist:   rgba(47,107,111,0.16);
+    --amber-flag:  #a8672f;
+    --red:         #8b2020;
+  }
+
+  html, body {
+    height: 100%;
+    background: linear-gradient(160deg, var(--parchment) 0%, var(--parchment2) 100%);
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .qv-topbar {
+    width: 100%;
+    border-bottom: 1px solid rgba(47,107,111,0.35);
+    padding: 1rem 0;
+    margin-bottom: 2.6rem;
+  }
+  .qv-topbar-inner {
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qv-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+  }
+  .qv-mark strong { font-weight: 700; color: var(--teal-deep); }
+  .qv-mark .ld-brand { font-family: Georgia, 'Times New Roman', serif; }
+  .qv-topbar-right { min-height: 1px; }
+
+  .wrap {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logo-mark {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--teal-dark);
+    margin-bottom: 1.1rem;
+  }
+
+  .entry-heading {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.65rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0.9rem;
+  }
+
+  .entry-blurb {
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: #4a5c5c;
+    margin-bottom: 1.4rem;
+  }
+
+  .trial-badge {
+    display: inline-block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    background: var(--teal-mist);
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 20px;
+    padding: 0.45rem 1.1rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .divider {
+    width: 46px;
+    height: 1px;
+    background: var(--teal);
+    opacity: 0.55;
+    margin: 0 auto 1.8rem;
+  }
+
+  .field-label {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+
+  input[type="email"] {
+    width: 100%;
+    padding: 0.95rem 1.1rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--ink);
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 2px;
+    outline: none;
+    transition: all 0.2s;
+    margin-bottom: 1.1rem;
+  }
+  input:focus { border-color: var(--teal); background: rgba(255,255,255,0.92); box-shadow: 0 0 0 3px var(--teal-mist); }
+
+  .age-gate {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    text-align: left;
+    margin-bottom: 1.1rem;
+  }
+  .age-gate input[type="checkbox"] {
+    margin-top: 0.25rem;
+    accent-color: var(--teal);
+    flex-shrink: 0;
+  }
+  .age-gate label {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #4a5c5c;
+  }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 0.92rem;
+    font-style: italic;
+    font-weight: 400;
+    margin-bottom: 0.4rem;
+    min-height: 0.8rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 2px;
+    background: transparent;
+    transition: background 0.2s;
+    text-align: left;
+  }
+  .error-msg:not(:empty) { background: rgba(139,32,32,0.07); }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal-deep);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 2.4rem;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: rgba(74,92,92,0.65);
+    text-align: center;
+  }
+  .page-footer a {
+    color: var(--teal-dark);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(47,107,111,0.25);
+  }
+
+  .mockup-flag {
+    max-width: 520px;
+    width: 100%;
+    margin: 2.5rem auto 0;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<header class="qv-topbar">
+  <div class="qv-topbar-inner">
+    <span class="qv-mark"><strong>QuVive</strong> <span class="ld-brand">LinguaDepth</span></span>
+    <span class="qv-topbar-right"></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="logo-mark">LinguaDepth</div>
+  <h1 class="entry-heading">Try 5 Free Lessons</h1>
+  <p class="entry-blurb">LinguaDepth teaches a language through the one you already speak &ndash; one small, real conversation at a time. Built on the same programmed-learning method as PrecisionSteps Tutorials, each lesson takes you from zero to something you can actually say, in minutes.</p>
+  <div class="trial-badge">5 Free Lessons &ndash; No Credit Card Needed</div>
+  <div class="divider"></div>
+
+  <label class="field-label" for="trialEmail">Your Email Address</label>
+  <input type="email" id="trialEmail" placeholder="you@example.com" autocomplete="email" />
+
+  <div class="age-gate">
+    <input type="checkbox" id="ageCheck" />
+    <label for="ageCheck">I confirm that I am 13 years of age or older, or that I am a parent or guardian accessing this on behalf of a minor.</label>
+  </div>
+
+  <div class="error-msg" id="entryError"></div>
+  <button class="btn-primary" id="beginTrialBtn" disabled>Begin Free Trial &nbsp;&rarr;</button>
+
+  <p class="page-footer" style="margin-top:1.6rem;">Already a Subscriber? <a href="index.html">Sign In Here &nbsp;&rarr;</a></p>
+  <p class="page-footer" style="margin-top:0.6rem;">
+    <a href="privacy.html">Privacy Policy</a>&nbsp;&middot;&nbsp;<a href="terms.html">Terms of Use</a>&nbsp;&middot;&nbsp;<a href="mailto:ask@linguadepth.com">ask@linguadepth.com</a>
+  </p>
+</div>
+
+<div class="mockup-flag">
+  <strong>Mockup notes for review, not shipped copy:</strong><br/>
+  1. This is Phase 1 item 2 (Free-Trial page), ported from PrecisionSteps' <code>free-trial.html</code> trial-entry screen &ndash; email capture plus the same 13+ age-gate confirmation (kept close to verbatim since it's compliance-facing language), reskinned to LinguaDepth's teal palette and Georgia + Arial fonts.<br/>
+  2. Scope of this file: the entry step only (email + age gate). PrecisionSteps' free-trial flow continues into a subject/settings screen, then loading, lesson, lesson-complete, and an upsell screen once the free lessons are used up &ndash; for LinguaDepth, the settings-equivalent screen already exists (the language-pair + CEFR + educational-level picker in <code>picker.html</code>), so this page hands off there rather than duplicating it.<br/>
+  3. Not yet wired: trial-mode chrome on the downstream pages (a "lessons remaining" counter, and an upsell screen once the cap is hit) &ndash; PrecisionSteps drives this with a <code>localStorage</code> lesson counter tied to its single free-text-subject engine. LinguaDepth's natural equivalent is the single-lesson path (Decision 8), which is Phase 1 item 6 and not yet built; wiring the trial counter into the picker/lesson pages is worth sequencing after that, not duplicated here ahead of it.<br/>
+  4. "5 Free Lessons" is carried over unchanged from PrecisionSteps' cap &ndash; not confirmed as the number Jamie wants for LinguaDepth.<br/>
+  5. No email storage or real submission logic wired, per Phase 1's no-backend scope &ndash; clicking "Begin Free Trial" (once the email is filled and the age box checked) navigates straight to the language-pair picker.<br/>
+  6. Privacy/Terms links point to LinguaDepth-named files that don't exist yet (Phase 1 item 8, still pending), same as the Access screen.
+</div>
+
+<script>
+  const trialEmail = document.getElementById("trialEmail");
+  const ageCheck = document.getElementById("ageCheck");
+  const beginTrialBtn = document.getElementById("beginTrialBtn");
+  const entryError = document.getElementById("entryError");
+
+  function checkEntryReady() {
+    const emailLooksValid = /\S+@\S+\.\S+/.test(trialEmail.value.trim());
+    beginTrialBtn.disabled = !(emailLooksValid && ageCheck.checked);
+  }
+
+  trialEmail.addEventListener("input", () => { entryError.textContent = ""; checkEntryReady(); });
+  ageCheck.addEventListener("change", checkEntryReady);
+
+  beginTrialBtn.addEventListener("click", () => {
+    // Stub – no real email capture or trial-session logic exists yet (Phase 3).
+    // Hands off to the language-pair picker to keep the click-through reviewable.
+    window.location.href = "picker.html";
+  });
+</script>
+</body>
+</html>

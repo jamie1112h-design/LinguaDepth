@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaDepth – Lesson 1</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:   #f5f0e8;
+    --parchment2:  #ede7d9;
+    --ink:         #2a1f0e;
+    --ink-light:   #3a2a10;
+    --teal:        #2f6b6f;
+    --teal-dark:   #1f4d50;
+    --teal-deep:   #163538;
+    --teal-mist:   rgba(47,107,111,0.16);
+    --amber-flag:  #a8672f;
+    --green:       #5a8a4a;
+    --red:         #a04040;
+    --cream-card:  rgba(255,255,255,0.62);
+  }
+
+  html, body {
+    min-height: 100%;
+    background: linear-gradient(160deg, var(--parchment) 0%, var(--parchment2) 100%);
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+  }
+
+  body { padding: 0 1.5rem 4rem; }
+
+  .qv-topbar {
+    border-bottom: 1px solid rgba(47,107,111,0.35);
+    padding: 1rem 0;
+    margin-bottom: 2.2rem;
+  }
+  .qv-topbar-inner {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qv-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+  }
+  .qv-mark strong { font-weight: 700; color: var(--teal-deep); }
+  .qv-mark .ld-brand { font-family: Georgia, 'Times New Roman', serif; }
+  .qv-topbar-right { min-height: 1px; }
+
+  .wrap { max-width: 700px; margin: 0 auto; }
+
+  .session-badge {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.3rem;
+    flex-wrap: wrap;
+  }
+  .badge-pill {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    background: var(--teal-mist);
+    border: 1px solid rgba(47,107,111,0.25);
+    border-radius: 20px;
+    padding: 0.3rem 0.9rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(47,107,111,0.15);
+    border-radius: 2px;
+    margin-bottom: 1.6rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--teal-dark));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .page-counter {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--teal);
+    text-align: center;
+    margin-bottom: 1.6rem;
+  }
+
+  .card {
+    background: var(--cream-card);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(47,107,111,0.2);
+    border-radius: 6px;
+    padding: 2.6rem 2.8rem;
+    box-shadow: 0 8px 40px rgba(22,53,56,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .frame-type {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.64rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 1.1rem;
+  }
+  .frame-type.review { color: var(--amber-flag); }
+
+  .lesson-text {
+    font-size: 1.18rem;
+    font-weight: 400;
+    line-height: 1.75;
+    color: var(--ink);
+    flex: 1;
+    margin-bottom: 1.6rem;
+  }
+
+  /* ── Vocalize control – inline pronunciation icon.
+     Word-level: sits right after a bolded vocabulary term.
+     Sentence-level: sits on its own line after a full example line. ── */
+  .vocalize-word {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-left: 0.2rem;
+    border: none;
+    border-radius: 50%;
+    background: var(--teal-mist);
+    color: var(--teal-dark);
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 0.15s;
+  }
+  .vocalize-word:hover { background: rgba(47,107,111,0.28); }
+  .vocalize-word svg { width: 0.75rem; height: 0.75rem; }
+
+  .example-line {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--teal-mist);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 4px 4px 0;
+    padding: 0.85rem 1.1rem;
+    margin-top: 0.8rem;
+    font-style: italic;
+    color: var(--teal-deep);
+  }
+  .vocalize-sentence {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(47,107,111,0.4);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    color: var(--teal-dark);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vocalize-sentence:hover { background: var(--teal); color: var(--parchment); }
+  .vocalize-sentence svg { width: 0.95rem; height: 0.95rem; }
+
+  .question-text {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.14rem;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.8rem 1.05rem;
+    border: 1px solid rgba(47,107,111,0.25);
+    border-radius: 4px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.4);
+    font-size: 1.02rem;
+    color: var(--ink-light);
+    line-height: 1.45;
+    text-align: left;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .option:hover { background: var(--teal-mist); border-color: rgba(47,107,111,0.45); }
+  .option.selected { border-color: var(--teal); background: var(--teal-mist); }
+  .option.correct  { border-color: var(--green); background: rgba(90,138,74,0.1); cursor: default; }
+  .option.wrong    { border-color: var(--red); background: rgba(160,64,64,0.07); opacity: 0.6; cursor: default; }
+  .opt-letter { font-family: Arial, Helvetica, sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--teal-dark); min-width: 18px; padding-top: 1px; }
+  .option.correct .opt-letter { color: var(--green); }
+  .option.wrong .opt-letter { color: var(--red); }
+
+  .answer-box {
+    border-left: 3px solid var(--teal);
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 1.5rem;
+    background: var(--teal-mist);
+    border-radius: 0 4px 4px 0;
+  }
+  .answer-label {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+  }
+  .answer-text { font-size: 1rem; font-style: italic; color: var(--ink); line-height: 1.6; }
+
+  .btn-row { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: auto; }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal-deep);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .mockup-flag {
+    max-width: 700px;
+    margin: 2.4rem auto 0;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<header class="qv-topbar">
+  <div class="qv-topbar-inner">
+    <span class="qv-mark"><strong>QuVive</strong> <span class="ld-brand">LinguaDepth</span></span>
+    <span class="qv-topbar-right"></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="session-badge">
+    <div class="badge-pill" id="badgeLang">French (Québécois)</div>
+    <div class="badge-pill" id="badgeCefr">B1</div>
+    <div class="badge-pill" id="badgeFrames">6 Frames</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
+  <div class="page-counter" id="pageCounter">Frame 1 of 6</div>
+  <div class="card" id="card"><!-- rendered by script --></div>
+</div>
+
+<div class="mockup-flag">
+  <strong>Mockup notes for review, not shipped copy:</strong><br/>
+  1. This is Lesson 1 of Module 1 ("Quick Hellos & Goodbyes") with two demo frames wired to cycle – a teaching frame and a question/answer frame – so the three-state loop (teach → question → answer) is visible and clickable, not just described. A real lesson would have as many frames as the frame-count setting.<br/>
+  2. Vocalize icons are placed but not wired – clicking either one shows an alert naming what would be spoken and in what language, per your "sort out the wiring later" instruction.<br/>
+  3. Session badges (language / CEFR / frame count) are hardcoded here for the mockup. Once this page is reached from the curriculum flow, they should read from the same URL parameters the curriculum page already accepts.<br/>
+  4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.
+</div>
+
+<script>
+  const speakerIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.06c1.5-.74 2.5-2.26 2.5-4.03z"/></svg>`;
+
+  function vocalize(text, kind) {
+    // Stub – wiring deferred. Would call a TTS provider and play the
+    // returned audio; see LDBIDL Decision 9 (and Decision 10 for Mohawk's
+    // separate, non-TTS pipeline).
+    alert(`Would vocalize (${kind}): "${text}"`);
+  }
+
+  const frames = [
+    {
+      type: "teach",
+      lesson: `In Québécois French, the most common everyday greeting is <strong>Bonjour</strong> <button class="vocalize-word" onclick="vocalize('Bonjour','word')" aria-label="Listen to Bonjour">${speakerIcon}</button> – used for both "hello" and "good day," any time before evening. Unlike English, Québécois speakers often follow it immediately with a quick check-in.`,
+      example: "Bonjour, comment ça va?"
+    },
+    {
+      type: "question",
+      question: "Which of these best fits a casual, spoken greeting when meeting a friend on the street?",
+      options: ["Bonjour, comment ça va?", "Veuillez agréer mes salutations distinguées.", "Objection, Votre Honneur.", "Le rapport est en cours de rédaction."],
+      correctIndex: 0,
+      explanation: `"Bonjour, comment ça va?" ("Hi, how's it going?") is the natural, casual register for a street greeting – the others are formal correspondence, courtroom language, and office jargon respectively.`
+    }
+  ];
+
+  let currentFrame = 0;
+  let selectedOption = null;
+  let answered = false;
+
+  function renderCard() {
+    const frame = frames[currentFrame];
+    const card = document.getElementById("card");
+    document.getElementById("pageCounter").textContent = `Frame ${currentFrame + 1} of ${frames.length}`;
+    document.getElementById("progressFill").style.width = `${Math.round(((currentFrame + 1) / frames.length) * 100)}%`;
+
+    if (frame.type === "teach") {
+      card.innerHTML = `
+        <div>
+          <div class="frame-type">Teach</div>
+          <p class="lesson-text">${frame.lesson}</p>
+          <div class="example-line">
+            <button class="vocalize-sentence" onclick="vocalize('${frame.example}','sentence')" aria-label="Listen to example sentence">${speakerIcon}</button>
+            <span>${frame.example}</span>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn-primary" id="actionBtn">Continue &nbsp;&rarr;</button></div>
+      `;
+      document.getElementById("actionBtn").addEventListener("click", () => { currentFrame++; selectedOption = null; answered = false; renderCard(); });
+
+    } else if (frame.type === "question" && !answered) {
+      const optsHTML = frame.options.map((opt, i) => `
+        <button class="option${selectedOption === i ? " selected" : ""}" data-i="${i}">
+          <span class="opt-letter">${String.fromCharCode(65 + i)}</span><span>${opt}</span>
+        </button>`).join("");
+      card.innerHTML = `
+        <div>
+          <div class="frame-type">Question</div>
+          <p class="question-text">${frame.question}</p>
+          <div class="options">${optsHTML}</div>
+        </div>
+        <div class="btn-row"><button class="btn-primary" id="actionBtn" ${selectedOption === null ? "disabled" : ""}>Check Answer</button></div>
+      `;
+      card.querySelectorAll(".option").forEach(btn => {
+        btn.addEventListener("click", () => { selectedOption = parseInt(btn.dataset.i); renderCard(); });
+      });
+      document.getElementById("actionBtn").addEventListener("click", () => { answered = true; renderCard(); });
+
+    } else if (frame.type === "question" && answered) {
+      const optsHTML = frame.options.map((opt, i) => {
+        let cls = "";
+        if (i === frame.correctIndex) cls = " correct";
+        else if (i === selectedOption) cls = " wrong";
+        return `<button class="option${cls}" disabled><span class="opt-letter">${String.fromCharCode(65 + i)}</span><span>${opt}</span></button>`;
+      }).join("");
+      const isLast = currentFrame === frames.length - 1;
+      card.innerHTML = `
+        <div>
+          <div class="frame-type">Answer</div>
+          <div class="options" style="margin-bottom:1rem;">${optsHTML}</div>
+          <div class="answer-box"><div class="answer-label">Explanation</div><p class="answer-text">${frame.explanation}</p></div>
+        </div>
+        <div class="btn-row"><button class="btn-primary" id="actionBtn">${isLast ? "Complete Lesson" : "Next Frame"}</button></div>
+      `;
+      document.getElementById("actionBtn").addEventListener("click", () => {
+        if (isLast) { alert("Would show the lesson-complete screen and return to the curriculum."); return; }
+        currentFrame++; selectedOption = null; answered = false; renderCard();
+      });
+    }
+  }
+
+  renderCard();
+</script>
+</body>
+</html>

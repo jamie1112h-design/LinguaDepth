@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaDepth – Which language would you like to learn?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:   #f5f0e8;
+    --parchment2:  #ede7d9;
+    --ink:         #2a1f0e;
+    --teal:        #2f6b6f;
+    --teal-dark:   #1f4d50;
+    --teal-deep:   #163538;
+    --teal-mist:   rgba(47,107,111,0.16);
+    --amber-flag:  #a8672f;
+  }
+
+  html, body {
+    height: 100%;
+    background: linear-gradient(160deg, var(--parchment) 0%, var(--parchment2) 100%);
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .qv-topbar {
+    width: 100%;
+    border-bottom: 1px solid rgba(47,107,111,0.35);
+    padding: 1rem 0;
+    margin-bottom: 2.6rem;
+  }
+  .qv-topbar-inner {
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qv-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+  }
+  .qv-mark strong { font-weight: 700; color: var(--teal-deep); }
+  .qv-mark .ld-brand { font-family: Georgia, 'Times New Roman', serif; }
+  .qv-topbar-right { min-height: 1px; } /* reserved slot for a future right-justified heading */
+
+  .wrap { width: 100%; max-width: 620px; text-align: center; }
+
+  .logo-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.35rem;
+  }
+
+  .brand {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    margin-bottom: 1.1rem;
+  }
+
+  /* ── Fathom line – the signature element. A depth-sounding gauge:
+     ticks grow longer moving outward from centre, echoing a nautical
+     lead-line. Replaces PrecisionSteps' plain divider with something
+     that is literally "depth," not just a decorative rule. ── */
+  .fathom-line {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 22px;
+    margin: 0 auto 2.2rem;
+  }
+  .fathom-line span {
+    display: block;
+    width: 2px;
+    background: var(--teal);
+    opacity: 0.55;
+    border-radius: 1px;
+  }
+
+  h1.intro-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.65rem;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .intro-sub {
+    font-size: 1.02rem;
+    font-weight: 300;
+    font-style: italic;
+    color: #5a6f6f;
+    margin-bottom: 2.4rem;
+  }
+
+  .pair-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.9rem;
+    align-items: start;
+    margin-bottom: 1.6rem;
+  }
+
+  .pair-arrow {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.3rem;
+    color: var(--teal);
+    padding-top: 2.2rem;
+  }
+
+  .field-block { text-align: left; position: relative; }
+
+  .field-label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.4rem;
+  }
+
+  .picker-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.08rem;
+    color: var(--ink);
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 4px;
+    padding: 0.7rem 0.8rem;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .picker-btn:focus, .picker-btn.open { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+  .picker-caret {
+    color: var(--teal);
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+  }
+
+  .picker-panel {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--parchment);
+    border: 1px solid rgba(47,107,111,0.35);
+    border-radius: 6px;
+    box-shadow: 0 10px 32px rgba(22,53,56,0.18);
+  }
+
+  .picker-panel.open { display: block; }
+
+  .picker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 1rem;
+    padding: 0.65rem 0.9rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(47,107,111,0.08);
+  }
+  .picker-row:last-child { border-bottom: none; }
+  .picker-row:hover { background: var(--teal-mist); }
+  .picker-row.selected { background: var(--teal-mist); font-weight: 600; color: var(--teal-dark); }
+
+  .picker-row .provisional-tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--amber-flag);
+    border: 1px solid var(--amber-flag);
+    border-radius: 3px;
+    padding: 0.1rem 0.35rem;
+  }
+
+  /* ── Provisional-language caveat banner (Mohawk / low-resource tier) ── */
+  .caveat-banner {
+    display: none;
+    text-align: left;
+    background: rgba(168,103,47,0.09);
+    border: 1px solid rgba(168,103,47,0.35);
+    border-radius: 4px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.6rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #5a3d1e;
+  }
+  .caveat-banner.active { display: block; }
+  .caveat-banner strong {
+    color: var(--amber-flag);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .option-group {
+    text-align: left;
+    margin-bottom: 1.5rem;
+  }
+
+  .option-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+
+  .option-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--teal-dark);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--teal);
+  }
+
+  .slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #8a9a9a;
+    margin-top: 0.3rem;
+  }
+
+  .level-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .level-pill {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.92rem;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid rgba(47,107,111,0.35);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--teal-dark);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .level-pill.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--parchment);
+  }
+
+  .tier-note {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #8a7050;
+    margin-top: 0.6rem;
+    line-height: 1.6;
+  }
+
+  .cefr-table {
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .cefr-row {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid rgba(47,107,111,0.15);
+    cursor: pointer;
+    background: rgba(255,255,255,0.4);
+  }
+  .cefr-row:last-child { border-bottom: none; }
+  .cefr-row:hover { background: var(--teal-mist); }
+  .cefr-row.selected { background: var(--teal-mist); }
+
+  .cefr-code {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--parchment);
+    background: var(--teal);
+    border-radius: 4px;
+    width: 2.1rem;
+    height: 1.6rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.05rem;
+  }
+
+  .cefr-row.selected .cefr-code { background: var(--teal-deep); }
+
+  .cefr-body { display: flex; flex-direction: column; gap: 0.1rem; }
+  .cefr-body strong { font-size: 0.95rem; color: var(--ink); }
+  .cefr-body span { font-size: 0.85rem; color: #4a5c5c; line-height: 1.4; }
+
+  .settings-summary {
+    font-size: 0.92rem;
+    font-style: italic;
+    color: #5a6f6f;
+    margin-bottom: 1.6rem;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.95rem 2.6rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal-deep);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-primary:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(22,53,56,0.25); }
+
+  .or-divider {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #7a8a8a;
+    margin-bottom: 1.2rem;
+  }
+
+  .sign-out-link {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(47,107,111,0.3);
+    width: fit-content;
+    margin: 0.3rem auto 0;
+  }
+
+  .mockup-flag {
+    max-width: 620px;
+    width: 100%;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+    margin-top: 2.5rem;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+
+  @media (max-width: 560px) {
+    .pair-row { grid-template-columns: 1fr; }
+    .pair-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="qv-topbar">
+  <div class="qv-topbar-inner">
+    <span class="qv-mark"><strong>QuVive</strong> <span class="ld-brand">LinguaDepth</span></span>
+    <span class="qv-topbar-right"></span>
+  </div>
+</header>
+<div class="wrap">
+  <div class="logo-mark">Learn Other Languages</div>
+  <div class="brand">LinguaDepth</div>
+
+  <div class="fathom-line" aria-hidden="true">
+    <span style="height:4px"></span><span style="height:7px"></span><span style="height:10px"></span>
+    <span style="height:14px"></span><span style="height:18px"></span><span style="height:22px"></span>
+    <span style="height:18px"></span><span style="height:14px"></span><span style="height:10px"></span>
+    <span style="height:7px"></span><span style="height:4px"></span>
+  </div>
+
+  <h1 class="intro-title">Which language would you<br/>like to learn today?</h1>
+  <p class="intro-sub">One frame at a time. One depth at a time.</p>
+
+  <div class="pair-row">
+    <div class="field-block">
+      <label class="field-label" id="sourceLabel">I already speak</label>
+      <button class="picker-btn" id="sourcePickerBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span id="sourcePickerText">English</span>
+        <span class="picker-caret">&#9662;</span>
+      </button>
+      <div class="picker-panel" id="sourcePickerPanel" role="listbox"></div>
+    </div>
+    <div class="pair-arrow">&rarr;</div>
+    <div class="field-block">
+      <label class="field-label" id="targetLabel">I want to learn</label>
+      <button class="picker-btn" id="targetPickerBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span id="targetPickerText">French (Québécois)</span>
+        <span class="picker-caret">&#9662;</span>
+      </button>
+      <div class="picker-panel" id="targetPickerPanel" role="listbox"></div>
+    </div>
+  </div>
+
+  <div class="caveat-banner" id="mohawkCaveat">
+    <strong>Community-Reviewed – Provisional.</strong> Kanien'kéha (Mohawk) instruction is generated with far less linguistic certainty than the European languages above – vocabulary, grammar, and especially diacritics/tone marking will need spot-checking by a fluent speaker before this tier is presented with full confidence. Treated here as the outlier deployment for modelling difficult, threatened, and ancient languages generally.
+  </div>
+
+  <div class="option-group">
+    <div class="option-group-header">
+      <label class="field-label" for="frameSlider" style="margin-bottom:0;">Lesson Length</label>
+      <div class="option-value" id="frameCountDisplay">10 frames</div>
+    </div>
+    <input type="range" id="frameSlider" min="5" max="20" step="1" value="10" />
+    <div class="slider-ticks"><span>5</span><span>8</span><span>10</span><span>13</span><span>16</span><span>20</span></div>
+  </div>
+
+  <div class="option-group">
+    <label class="field-label" style="margin-bottom:0.65rem;">Your Educational Level</label>
+    <div class="level-pills">
+      <button class="level-pill" data-edu="elementary">Elementary</button>
+      <button class="level-pill" data-edu="middle_school">Middle School</button>
+      <button class="level-pill" data-edu="high_school">High School</button>
+      <button class="level-pill active" data-edu="college">College +</button>
+    </div>
+    <p class="tier-note">Shapes explanation style and vocabulary – a genuinely different axis from how much of the target language you already know, below.</p>
+  </div>
+
+  <div class="option-group">
+    <label class="field-label" style="margin-bottom:0.65rem;">Language Learning Level</label>
+    <div class="cefr-table" id="cefrTable">
+      <div class="cefr-row" data-cefr="A1">
+        <div class="cefr-code">A1</div>
+        <div class="cefr-body"><strong>Complete beginner</strong><span>Greetings, numbers, introductions, present-tense basics, very common words</span></div>
+      </div>
+      <div class="cefr-row" data-cefr="A2">
+        <div class="cefr-code">A2</div>
+        <div class="cefr-body"><strong>Elementary</strong><span>Daily routines, shopping, directions, simple past/future forms</span></div>
+      </div>
+      <div class="cefr-row selected" data-cefr="B1">
+        <div class="cefr-code">B1</div>
+        <div class="cefr-body"><strong>Intermediate</strong><span>Everyday conversations, opinions, travel, work, longer connected sentences</span></div>
+      </div>
+      <div class="cefr-row" data-cefr="B2">
+        <div class="cefr-code">B2</div>
+        <div class="cefr-body"><strong>Upper-intermediate</strong><span>Discussions of abstract topics, nuanced grammar, articles and media</span></div>
+      </div>
+      <div class="cefr-row" data-cefr="C1">
+        <div class="cefr-code">C1</div>
+        <div class="cefr-body"><strong>Advanced</strong><span>Professional/academic language, idioms, subtle distinctions, complex texts</span></div>
+      </div>
+      <div class="cefr-row" data-cefr="C2">
+        <div class="cefr-code">C2</div>
+        <div class="cefr-body"><strong>Near-mastery</strong><span>Highly nuanced, specialised, literary, and fast natural language</span></div>
+      </div>
+    </div>
+    <p class="tier-note">CEFR levels describe practical can-do ability across reading, listening, speaking, and writing – not a count of memorised words or rules. This is <strong>self-assessed</strong>: ask yourself "Can I introduce myself and ask basic questions?" (likely A1), "Can I handle familiar situations without much help?" (likely B1), or "Can I discuss complex subjects and understand demanding texts?" (likely B2–C1). It isn't a formal placement test. If your skills are uneven – say, stronger reading than speaking – pick the level matching your weaker skill, unless a future version lets you set levels per skill.</p>
+  </div>
+
+  <p class="settings-summary" id="settingsSummary">10-frame · B1 lesson</p>
+
+  <button class="btn-primary" id="startBtn">Begin With a Single Lesson &nbsp;&rarr;</button>
+  <p class="or-divider">Or You May</p>
+  <button class="btn-primary" id="curriculumBtn">Begin With a Pre-Built Curriculum &nbsp;&rarr;</button>
+  <a href="#" class="sign-out-link">Manage Subscription</a>
+  <a href="#" class="sign-out-link">Sign Out</a>
+</div>
+
+<div class="mockup-flag">
+  <strong>Mockup notes for review, not shipped copy:</strong><br/>
+  1. Dialects are now merged into one flat list per your instruction – French (France) and French (Québécois) are two separate rows in the same picker, not a language-then-dialect two-step. Same for Spanish and Portuguese.<br/>
+  2. Portuguese's European/Brazilian split remains my proposed extension of the pattern you set with French/Spanish, not something you stated explicitly – confirm or drop.<br/>
+  3. Italian and Greek are shown as single rows for now.<br/>
+  4. This is the custom-picker version you asked to see first (button + dropdown panel of rows). A plain native &lt;select&gt; dropdown is the other option on the table – say the word and I'll build that variant alongside this one for comparison.<br/>
+  5. Fonts corrected to the platform-wide Georgia + Arial pairing (Sitrep v1.35/v1.36, 2026-08-16) – Playfair Display and Crimson Pro were a carryover from PrecisionSteps that shouldn't have applied to new LinguaDepth development.<br/>
+  6. Your Educational Level and Language Learning Level are now two genuinely distinct axes – audience/explanation style vs. actual target-language ability – rather than the overlapping Learning Level/Proficiency Tier pair from the last pass.<br/>
+  7. Click the "I want to learn" picker and choose Kanien'kéha (Mohawk) to see the caveat banner and its provisional tag in the list.<br/>
+  8. "Begin the Lesson" renamed to "Begin With a Single Lesson" so it reads as a parallel choice against the new "Begin With a Pre-Built Curriculum" button – your suggested "Begin Your Single Lesson" works too if you'd rather keep it; I picked the "With a" phrasing for symmetry between the two options, not because the other was wrong.<br/>
+  9. Important routing correction: "Begin the Lesson" used to navigate straight to the curriculum page – that was wrong once there are two real paths. It's now a stub for the not-yet-built single-ad-hoc-lesson engine (click it to see what it would launch); only "Begin With a Pre-Built Curriculum" actually navigates, and it now carries your live selections (language pair, CEFR level, educational level, frame count) to the curriculum page as URL parameters so that page's title reflects what you actually picked instead of a hardcoded example.
+</div>
+
+<script>
+  // Flat list – dialects are rows in the same list as their parent language,
+  // not a separate nested step, per instruction.
+  const LANGUAGES = [
+    { code: "en",    name: "English" },
+    { code: "fr-FR", name: "French (France)" },
+    { code: "fr-QC", name: "French (Québécois)" },
+    { code: "es-ES", name: "Spanish (Spain)" },
+    { code: "es-MX", name: "Spanish (Latin America)" },
+    { code: "pt-PT", name: "Portuguese (Portugal)" },
+    { code: "pt-BR", name: "Portuguese (Brazilian)" },
+    { code: "it",    name: "Italian" },
+    { code: "el",    name: "Greek" },
+    { code: "moh",   name: "Kanien'kéha (Mohawk)", provisional: true }
+  ];
+
+  let sourceValue = "en";
+  let targetValue = "fr-QC";
+
+  function buildPicker(panelEl, textEl, btnEl, getValue, onSelect) {
+    panelEl.innerHTML = "";
+    LANGUAGES.forEach(l => {
+      const row = document.createElement("div");
+      row.className = "picker-row" + (l.code === getValue() ? " selected" : "");
+      row.setAttribute("role", "option");
+      row.innerHTML = `<span>${l.name}</span>` + (l.provisional ? `<span class="provisional-tag">Provisional</span>` : "");
+      row.addEventListener("click", () => {
+        onSelect(l.code);
+        textEl.textContent = l.name;
+        panelEl.classList.remove("open");
+        btnEl.setAttribute("aria-expanded", "false");
+        handleMohawkCaveat();
+        updateSummary();
+      });
+      panelEl.appendChild(row);
+    });
+  }
+
+  function wirePicker(btnId, panelId, textId, getValue, onSelect) {
+    const btn = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    const text = document.getElementById(textId);
+    buildPicker(panel, text, btn, getValue, onSelect);
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = !panel.classList.contains("open");
+      document.querySelectorAll(".picker-panel").forEach(p => p.classList.remove("open"));
+      if (willOpen) {
+        buildPicker(panel, text, btn, getValue, onSelect); // refresh "selected" row
+        panel.classList.add("open");
+      }
+      btn.setAttribute("aria-expanded", String(willOpen));
+    });
+    return { btn, panel, text };
+  }
+
+  wirePicker("sourcePickerBtn", "sourcePickerPanel", "sourcePickerText", () => sourceValue, (v) => { sourceValue = v; });
+  wirePicker("targetPickerBtn", "targetPickerPanel", "targetPickerText", () => targetValue, (v) => { targetValue = v; });
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".picker-panel").forEach(p => p.classList.remove("open"));
+    document.querySelectorAll(".picker-btn").forEach(b => b.setAttribute("aria-expanded", "false"));
+  });
+
+  function handleMohawkCaveat() {
+    const banner = document.getElementById("mohawkCaveat");
+    if (targetValue === "moh" || sourceValue === "moh") {
+      banner.classList.add("active");
+    } else {
+      banner.classList.remove("active");
+    }
+  }
+  handleMohawkCaveat();
+
+  const frameSlider = document.getElementById("frameSlider");
+  const frameCountDisplay = document.getElementById("frameCountDisplay");
+  let currentEdu = "college";
+  let currentCefr = "B1";
+
+  document.querySelectorAll(".level-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".level-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentEdu = btn.dataset.edu;
+      updateSummary();
+    });
+  });
+
+  document.querySelectorAll(".cefr-row").forEach(row => {
+    row.addEventListener("click", () => {
+      document.querySelectorAll(".cefr-row").forEach(r => r.classList.remove("selected"));
+      row.classList.add("selected");
+      currentCefr = row.dataset.cefr;
+      updateSummary();
+    });
+  });
+
+  function updateSummary() {
+    const frames = frameSlider.value;
+    const targetName = LANGUAGES.find(l => l.code === targetValue)?.name || "";
+    document.getElementById("settingsSummary").textContent = `${frames}-frame · ${currentCefr} · Learning ${targetName}`;
+    frameCountDisplay.textContent = `${frames} frames`;
+  }
+
+  frameSlider.addEventListener("input", updateSummary);
+  updateSummary();
+
+  document.getElementById("startBtn").addEventListener("click", () => {
+    // Stub – the single-lesson frame engine (skip the curriculum, generate
+    // one ad-hoc lesson from current settings) doesn't exist as a page yet.
+    alert("Would launch a single ad-hoc lesson: " + document.getElementById("settingsSummary").textContent);
+  });
+
+  document.getElementById("curriculumBtn").addEventListener("click", () => {
+    const params = new URLSearchParams({
+      source: sourceValue,
+      target: targetValue,
+      cefr: currentCefr,
+      edu: currentEdu,
+      frames: frameSlider.value
+    });
+    window.location.href = "curriculum.html?" + params.toString();
+  });
+</script>
+</body>
+</html>

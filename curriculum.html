@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaDepth – Your Course</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:   #f5f0e8;
+    --parchment2:  #ede7d9;
+    --ink:         #2a1f0e;
+    --teal:        #2f6b6f;
+    --teal-dark:   #1f4d50;
+    --teal-deep:   #163538;
+    --teal-mist:   rgba(47,107,111,0.16);
+    --amber-flag:  #a8672f;
+  }
+
+  html, body {
+    min-height: 100%;
+    background: linear-gradient(160deg, var(--parchment) 0%, var(--parchment2) 100%);
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+  }
+
+  body { padding: 0 1.5rem 4rem; }
+
+  .qv-topbar {
+    border-bottom: 1px solid rgba(47,107,111,0.35);
+    padding: 1rem 0;
+    margin-bottom: 2.4rem;
+  }
+  .qv-topbar-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qv-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+  }
+  .qv-mark strong { font-weight: 700; color: var(--teal-deep); }
+  .qv-mark .ld-brand { font-family: Georgia, 'Times New Roman', serif; }
+  .qv-topbar-right { min-height: 1px; } /* reserved slot for a future right-justified heading */
+
+  .wrap { max-width: 680px; margin: 0 auto; }
+
+  .logo-mark {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--teal-dark);
+    text-align: center;
+    margin-bottom: 0.6rem;
+  }
+
+  .page-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.9rem;
+    font-weight: 400;
+    text-align: center;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  .page-title strong { font-weight: 600; }
+
+  .page-sub {
+    text-align: center;
+    font-size: 1.02rem;
+    font-weight: 300;
+    font-style: italic;
+    color: #5a6f6f;
+    margin-bottom: 2.6rem;
+  }
+
+  /* ── Depth-gauge rail: a vertical fathom-line running behind the module
+     list, tying course progress to the "Depth" signature from the intro
+     screen – each module sits at a marked depth rather than a bare number. ── */
+  .course-rail {
+    position: relative;
+    padding-left: 2.6rem;
+  }
+  .course-rail::before {
+    content: "";
+    position: absolute;
+    left: 0.85rem;
+    top: 0.6rem;
+    bottom: 0.6rem;
+    width: 2px;
+    background: repeating-linear-gradient(to bottom, var(--teal) 0, var(--teal) 6px, transparent 6px, transparent 14px);
+    opacity: 0.5;
+  }
+
+  .module {
+    position: relative;
+    margin-bottom: 1.4rem;
+    border-radius: 6px;
+    border: 1px solid rgba(47,107,111,0.28);
+    background: rgba(255,255,255,0.5);
+    padding: 1.3rem 1.5rem 1.4rem;
+  }
+
+  .module::before {
+    content: attr(data-depth);
+    position: absolute;
+    left: -2.6rem;
+    top: 1.3rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: var(--teal);
+    color: var(--parchment);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .module.locked { opacity: 0.55; }
+  .module.locked::before { background: #b9c4c4; }
+
+  .module-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.25rem;
+  }
+
+  .module-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.35rem;
+  }
+
+  .module-blurb {
+    font-size: 0.95rem;
+    color: #4a5c5c;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+  }
+
+  .lesson-list { list-style: none; margin-bottom: 1.1rem; }
+
+  .lesson-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.98rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(47,107,111,0.12);
+  }
+  .lesson-row:last-child { border-bottom: none; }
+
+  .lesson-num {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.82rem;
+    color: var(--teal);
+    width: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .lesson-frames {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: #8a9a9a;
+    white-space: nowrap;
+  }
+
+  .btn-start {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal-deep);
+    border: none;
+    border-radius: 2px;
+    padding: 0.75rem 1.7rem;
+    cursor: pointer;
+  }
+  .btn-start:hover { background: var(--teal-dark); }
+
+  .lock-note {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #7a8a8a;
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 2.2rem;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(47,107,111,0.3);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .mockup-flag {
+    max-width: 680px;
+    margin: 2.5rem auto 0;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<header class="qv-topbar">
+  <div class="qv-topbar-inner">
+    <span class="qv-mark"><strong>QuVive</strong> <span class="ld-brand">LinguaDepth</span></span>
+    <span class="qv-topbar-right"></span>
+  </div>
+</header>
+<div class="wrap">
+  <div class="logo-mark">LinguaDepth</div>
+  <h1 class="page-title">Your Course: <strong id="courseLangName">a language</strong></h1>
+  <p class="page-sub">Starting where the language actually happens – on the street.</p>
+
+  <div class="course-rail">
+
+    <div class="module" data-depth="1">
+      <div class="module-eyebrow">Module 1 · Unlocked</div>
+      <div class="module-title">On the Street</div>
+      <p class="module-blurb">Six tiny, real conversations you could have within an hour of landing – before a single verb table. The point isn't completeness, it's momentum: leave this module able to actually say something.</p>
+      <ul class="lesson-list">
+        <li class="lesson-row"><span class="lesson-num">1</span> Quick Hellos &amp; Goodbyes <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row"><span class="lesson-num">2</span> "Do You Speak English?" <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row"><span class="lesson-num">3</span> Ordering a Coffee or Snack <span class="lesson-frames">8 frames</span></li>
+        <li class="lesson-row"><span class="lesson-num">4</span> Asking for Directions <span class="lesson-frames">8 frames</span></li>
+        <li class="lesson-row"><span class="lesson-num">5</span> Small Talk About the Weather <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row"><span class="lesson-num">6</span> Saying Thanks &amp; Parting Well <span class="lesson-frames">6 frames</span></li>
+      </ul>
+      <button class="btn-start" id="startModule1">Start Lesson 1 &nbsp;&rarr;</button>
+    </div>
+
+    <div class="module locked" data-depth="2">
+      <div class="module-eyebrow">Module 2 · Unlocks after Module 1</div>
+      <div class="module-title">Everyday Errands</div>
+      <p class="module-blurb">Shopping, asking a price, catching the right bus – the errands that fill an ordinary day.</p>
+      <p class="lock-note">6 lessons · previewed, not yet built out</p>
+    </div>
+
+    <div class="module locked" data-depth="3">
+      <div class="module-eyebrow">Module 3 · Unlocks after Module 2</div>
+      <div class="module-title">Getting to Know Someone</div>
+      <p class="module-blurb">Introducing yourself properly, talking about work and family, making plans to meet again.</p>
+      <p class="lock-note">6 lessons · previewed, not yet built out</p>
+    </div>
+
+    <div class="module locked" data-depth="4">
+      <div class="module-eyebrow">Module 4 · Unlocks after Module 3</div>
+      <div class="module-title">Grammar Foundations</div>
+      <p class="module-blurb">Now that you can already say things, the structure underneath them – verb patterns, tense, agreement.</p>
+      <p class="lock-note">Structured groundwork, arriving once the hook has done its job</p>
+    </div>
+
+  </div>
+
+  <a href="#" class="back-link">&larr; Change Language</a>
+</div>
+
+<div class="mockup-flag">
+  <strong>Mockup notes for review, not shipped copy:</strong><br/>
+  1. Module 1's six lesson titles and Module 2–4's names/blurbs are content proposals from me, not yet confirmed by you – the "street conversations first" ordering is your instruction; the specific topics inside it are my draft.<br/>
+  2. Real architecture question this raises: PrecisionSteps generates one free-text subject per session with no memory between visits. A curriculum needs the opposite – a fixed sequence that persists across a learner's visits and tracks which module/lesson they've completed. That's a genuine new piece (a `curriculum` and `progress` table in Supabase, keyed to the access code), not something the existing engine does today – worth its own decision before backend work starts.<br/>
+  3. Open question I haven't resolved: is the six-lesson Module 1 the same fixed curriculum for every learner of a given target language (authored or generated once, then reused), or generated fresh per learner? Fixed-and-shared is cheaper and lets you hand-review the crucial first module; generated-per-learner costs more and is harder to quality-control for exactly the module meant to hook people.<br/>
+  4. Locked-module blurbs are deliberately visible (not hidden behind a "???") – seeing what's coming is itself part of the enticement; only the lesson-by-lesson breakdown is hidden until unlocked.<br/>
+  5. Fonts corrected to the platform-wide Georgia + Arial pairing (Sitrep v1.35/v1.36, 2026-08-16), matching the same fix on the intro screen.<br/>
+  6. The course title now reads from the URL (?target=fr-QC etc.), passed by the intro page's "Begin With a Pre-Built Curriculum" button – open this file directly with no parameters and it falls back to "a language" rather than guessing.
+</div>
+
+<script>
+  // Same code/name map as the index page's picker – kept in sync manually for
+  // now since these are two independent static files; once this becomes a
+  // real app this belongs in one shared source, not copy-pasted per page.
+  const LANGUAGES = {
+    "en": "English",
+    "fr-FR": "French (France)",
+    "fr-QC": "French (Québécois)",
+    "es-ES": "Spanish (Spain)",
+    "es-MX": "Spanish (Latin America)",
+    "pt-PT": "Portuguese (Portugal)",
+    "pt-BR": "Portuguese (Brazilian)",
+    "it": "Italian",
+    "el": "Greek",
+    "moh": "Kanien'kéha (Mohawk)"
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const targetCode = params.get("target");
+  const courseLangName = document.getElementById("courseLangName");
+  if (targetCode && LANGUAGES[targetCode]) {
+    courseLangName.textContent = LANGUAGES[targetCode];
+  }
+  // cefr/edu/frames also arrive via params but aren't surfaced on this screen
+  // yet – nothing here consumes them until Module 1 actually generates frames.
+
+  document.getElementById("startModule1").addEventListener("click", () => {
+    window.location.href = "lesson.html?" + params.toString();
+  });
+</script>
+</body>
+</html>
