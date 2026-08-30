@@ -296,6 +296,68 @@
     color: #4a5c5c;
   }
   #lessonContent { display: none; }
+
+  /* ── Lesson-complete state (Phase 1 item 4) ── */
+  .complete-wrap {
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
+    display: none;
+  }
+  .complete-card {
+    background: var(--cream-card);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(47,107,111,0.2);
+    border-radius: 6px;
+    padding: 3rem 3.2rem;
+    box-shadow: 0 8px 40px rgba(22,53,56,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+    text-align: center;
+  }
+  .complete-label {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.64rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 1.4rem;
+  }
+  .complete-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.9rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+  }
+  .complete-sub {
+    font-size: 1.05rem;
+    font-weight: 300;
+    font-style: italic;
+    color: #4a5c5c;
+    margin-bottom: 2rem;
+  }
+  .complete-btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    background: transparent;
+    border: 1px solid rgba(47,107,111,0.4);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--teal-mist); }
 </style>
 </head>
 <body>
@@ -322,6 +384,18 @@
     <div class="page-counter" id="pageCounter">Frame 1 of 6</div>
     <div class="card" id="card"><!-- rendered by script --></div>
   </div>
+
+  <div class="complete-wrap" id="completeState">
+    <div class="complete-card">
+      <div class="complete-label">Lesson Complete</div>
+      <h2 class="complete-title">Nice work.</h2>
+      <p class="complete-sub" id="completeSubText">You've completed Lesson 1 of 6 in Module 1: On the Street.</p>
+      <div class="complete-btn-row">
+        <button class="btn-primary" id="nextLessonBtn" style="width:auto;">Next Lesson &nbsp;&rarr;</button>
+        <button class="btn-secondary" id="backToCurriculumBtn">Back to Curriculum &nbsp;&rarr;</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="mockup-flag">
@@ -330,7 +404,8 @@
   2. Vocalize icons are placed but not wired – clicking either one shows an alert naming what would be spoken and in what language, per your "sort out the wiring later" instruction.<br/>
   3. Session badges (language / CEFR / frame count) are hardcoded here for the mockup. Once this page is reached from the curriculum flow, they should read from the same URL parameters the curriculum page already accepts.<br/>
   4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.<br/>
-  5. Phase 1 item 3 (loading state), added this pass: a spinner + "Composing your lesson…" shows for a fixed 1.5 seconds before the frame content appears, ported from PrecisionSteps' `loadingScreen` pattern (spinner markup and timing) and reskinned to the teal palette. This is a simulated delay only – in Phase 3, this becomes the real wait on the Supabase Edge Function call that generates the lesson, and the fixed timeout goes away entirely in favor of showing the spinner until that call actually resolves.
+  5. Phase 1 item 3 (loading state), added this pass: a spinner + "Composing your lesson…" shows for a fixed 1.5 seconds before the frame content appears, ported from PrecisionSteps' `loadingScreen` pattern (spinner markup and timing) and reskinned to the teal palette. This is a simulated delay only – in Phase 3, this becomes the real wait on the Supabase Edge Function call that generates the lesson, and the fixed timeout goes away entirely in favor of showing the spinner until that call actually resolves.<br/>
+  6. Phase 1 item 4 (lesson-complete screen), added this pass: replaces the old bare `alert()` with a designed state (completion message, progress line, and a "Next Lesson" vs. "Back to Curriculum" choice), ported from PrecisionSteps' `completeScreen` structure and reskinned. "Next Lesson" is a stub alert since Lesson 2 doesn't exist yet – only Lesson 1 has real content built. "Back to Curriculum" navigates for real, forwarding the current URL's query string so the curriculum page's title stays correct. Not in scope here: reflecting the completion on the curriculum page itself (Module 1 marked done, Module 2 unlocked) – that's Phase 1 item 5, not yet built, so returning to the curriculum still shows the same static locked/unlocked layout regardless of this completion.
 </div>
 
 <script>
@@ -417,11 +492,32 @@
         <div class="btn-row"><button class="btn-primary" id="actionBtn">${isLast ? "Complete Lesson" : "Next Frame"}</button></div>
       `;
       document.getElementById("actionBtn").addEventListener("click", () => {
-        if (isLast) { alert("Would show the lesson-complete screen and return to the curriculum."); return; }
+        if (isLast) { showComplete(); return; }
         currentFrame++; selectedOption = null; answered = false; renderCard();
       });
     }
   }
+
+  function showComplete() {
+    document.getElementById("card").style.display = "none";
+    document.querySelector(".progress-bar").style.display = "none";
+    document.querySelector(".page-counter").style.display = "none";
+    document.querySelector(".session-badge").style.display = "none";
+    document.getElementById("completeState").style.display = "block";
+  }
+
+  document.getElementById("nextLessonBtn").addEventListener("click", () => {
+    // Stub – Lesson 2 doesn't exist yet. Module 1's other five lessons are
+    // previewed on the curriculum page but not built out (see LDBIDL Part III).
+    alert("Would advance to Lesson 2: \"Do You Speak English?\" – not built yet.");
+  });
+
+  document.getElementById("backToCurriculumBtn").addEventListener("click", () => {
+    // Carries forward whatever query params brought us here (language pair,
+    // CEFR, edu level, frames) even though this page doesn't parse them itself
+    // yet (see mockup note 3) – so the curriculum page's title stays correct.
+    window.location.href = "curriculum.html" + window.location.search;
+  });
 
   // Loading state (Phase 1 item 3): simulate the delay of content being
   // generated. In Phase 3 this becomes the real await on the Supabase Edge
