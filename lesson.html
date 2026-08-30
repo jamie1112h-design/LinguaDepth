@@ -266,6 +266,36 @@
     color: #3d4e4e;
   }
   .mockup-flag strong { color: var(--teal-dark); }
+
+  /* ── Loading state (Phase 1 item 3): shown while lesson content is
+     "being generated" – in Phase 3 this becomes the real wait on the
+     Supabase Edge Function call; here it's a fixed simulated delay. ── */
+  .loading-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 340px;
+    text-align: center;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(47,107,111,0.18);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 1.4rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: #4a5c5c;
+  }
+  #lessonContent { display: none; }
 </style>
 </head>
 <body>
@@ -277,14 +307,21 @@
 </header>
 
 <div class="wrap">
-  <div class="session-badge">
-    <div class="badge-pill" id="badgeLang">French (Québécois)</div>
-    <div class="badge-pill" id="badgeCefr">B1</div>
-    <div class="badge-pill" id="badgeFrames">6 Frames</div>
+  <div class="loading-wrap" id="loadingState">
+    <div class="spinner"></div>
+    <p class="loading-text">Composing your lesson&hellip;</p>
   </div>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
-  <div class="page-counter" id="pageCounter">Frame 1 of 6</div>
-  <div class="card" id="card"><!-- rendered by script --></div>
+
+  <div id="lessonContent">
+    <div class="session-badge">
+      <div class="badge-pill" id="badgeLang">French (Québécois)</div>
+      <div class="badge-pill" id="badgeCefr">B1</div>
+      <div class="badge-pill" id="badgeFrames">6 Frames</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
+    <div class="page-counter" id="pageCounter">Frame 1 of 6</div>
+    <div class="card" id="card"><!-- rendered by script --></div>
+  </div>
 </div>
 
 <div class="mockup-flag">
@@ -292,7 +329,8 @@
   1. This is Lesson 1 of Module 1 ("Quick Hellos & Goodbyes") with two demo frames wired to cycle – a teaching frame and a question/answer frame – so the three-state loop (teach → question → answer) is visible and clickable, not just described. A real lesson would have as many frames as the frame-count setting.<br/>
   2. Vocalize icons are placed but not wired – clicking either one shows an alert naming what would be spoken and in what language, per your "sort out the wiring later" instruction.<br/>
   3. Session badges (language / CEFR / frame count) are hardcoded here for the mockup. Once this page is reached from the curriculum flow, they should read from the same URL parameters the curriculum page already accepts.<br/>
-  4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.
+  4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.<br/>
+  5. Phase 1 item 3 (loading state), added this pass: a spinner + "Composing your lesson…" shows for a fixed 1.5 seconds before the frame content appears, ported from PrecisionSteps' `loadingScreen` pattern (spinner markup and timing) and reskinned to the teal palette. This is a simulated delay only – in Phase 3, this becomes the real wait on the Supabase Edge Function call that generates the lesson, and the fixed timeout goes away entirely in favor of showing the spinner until that call actually resolves.
 </div>
 
 <script>
@@ -385,7 +423,15 @@
     }
   }
 
-  renderCard();
+  // Loading state (Phase 1 item 3): simulate the delay of content being
+  // generated. In Phase 3 this becomes the real await on the Supabase Edge
+  // Function call, and the spinner shows until that promise resolves instead
+  // of a fixed timeout.
+  setTimeout(() => {
+    document.getElementById("loadingState").style.display = "none";
+    document.getElementById("lessonContent").style.display = "block";
+    renderCard();
+  }, 1500);
 </script>
 </body>
 </html>
