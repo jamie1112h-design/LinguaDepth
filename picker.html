@@ -510,7 +510,7 @@
   6. Your Educational Level and Language Learning Level are now two genuinely distinct axes – audience/explanation style vs. actual target-language ability – rather than the overlapping Learning Level/Proficiency Tier pair from the last pass.<br/>
   7. Click the "I want to learn" picker and choose Kanien'kéha (Mohawk) to see the caveat banner and its provisional tag in the list.<br/>
   8. "Begin the Lesson" renamed to "Begin With a Single Lesson" so it reads as a parallel choice against the new "Begin With a Pre-Built Curriculum" button – your suggested "Begin Your Single Lesson" works too if you'd rather keep it; I picked the "With a" phrasing for symmetry between the two options, not because the other was wrong.<br/>
-  9. Important routing correction: "Begin the Lesson" used to navigate straight to the curriculum page – that was wrong once there are two real paths. It's now a stub for the not-yet-built single-ad-hoc-lesson engine (click it to see what it would launch); only "Begin With a Pre-Built Curriculum" actually navigates, and it now carries your live selections (language pair, CEFR level, educational level, frame count) to the curriculum page as URL parameters so that page's title reflects what you actually picked instead of a hardcoded example.
+  9. Updated this pass: "Begin With a Single Lesson" now navigates for real to `single-lesson.html` (Phase 1 item 6, Decision 36), carrying the same live selections (language pair, CEFR, educational level, frame count) as URL params that "Begin With a Pre-Built Curriculum" already sent to the curriculum page. Both buttons now genuinely work.
 </div>
 
 <script>
@@ -621,9 +621,14 @@
   updateSummary();
 
   document.getElementById("startBtn").addEventListener("click", () => {
-    // Stub – the single-lesson frame engine (skip the curriculum, generate
-    // one ad-hoc lesson from current settings) doesn't exist as a page yet.
-    alert("Would launch a single ad-hoc lesson: " + document.getElementById("settingsSummary").textContent);
+    const params = new URLSearchParams({
+      source: sourceValue,
+      target: targetValue,
+      cefr: currentCefr,
+      edu: currentEdu,
+      frames: frameSlider.value
+    });
+    window.location.href = "single-lesson.html?" + params.toString();
   });
 
   document.getElementById("curriculumBtn").addEventListener("click", () => {
