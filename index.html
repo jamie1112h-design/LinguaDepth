@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LinguaDepth – Begin Your Session</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:   #f5f0e8;
+    --parchment2:  #ede7d9;
+    --ink:         #2a1f0e;
+    --teal:        #2f6b6f;
+    --teal-dark:   #1f4d50;
+    --teal-deep:   #163538;
+    --teal-mist:   rgba(47,107,111,0.16);
+    --amber-flag:  #a8672f;
+    --red:         #8b2020;
+  }
+
+  html, body {
+    height: 100%;
+    background: linear-gradient(160deg, var(--parchment) 0%, var(--parchment2) 100%);
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .qv-topbar {
+    width: 100%;
+    border-bottom: 1px solid rgba(47,107,111,0.35);
+    padding: 1rem 0;
+    margin-bottom: 2.6rem;
+  }
+  .qv-topbar-inner {
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qv-mark {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+  }
+  .qv-mark strong { font-weight: 700; color: var(--teal-deep); }
+  .qv-mark .ld-brand { font-family: Georgia, 'Times New Roman', serif; }
+  .qv-topbar-right { min-height: 1px; }
+
+  .wrap {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logo-mark {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--teal-dark);
+    margin-bottom: 1.1rem;
+  }
+
+  .key-heading {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.65rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0.9rem;
+  }
+
+  .orient-blurb {
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: #4a5c5c;
+    margin-bottom: 1.8rem;
+  }
+
+  .free-trial-cta {
+    display: inline-block;
+    margin-bottom: 0.6rem;
+    padding: 0.82rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .free-trial-cta:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(22,53,56,0.18); }
+
+  .free-trial-note {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #7a8a8a;
+    margin-bottom: 1.8rem;
+  }
+
+  .subscriber-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1.4rem;
+  }
+  .subscriber-divider::before, .subscriber-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(47,107,111,0.25);
+  }
+  .subscriber-divider span {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(47,107,111,0.55);
+  }
+
+  .field-label {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+
+  input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 0.95rem 1.1rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--ink);
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 2px;
+    outline: none;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+  }
+  input:focus { border-color: var(--teal); background: rgba(255,255,255,0.92); box-shadow: 0 0 0 3px var(--teal-mist); }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 0.92rem;
+    font-style: italic;
+    font-weight: 400;
+    margin-bottom: 0.4rem;
+    min-height: 0.8rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 2px;
+    background: transparent;
+    transition: background 0.2s;
+    text-align: left;
+  }
+  .error-msg:not(:empty) { background: rgba(139,32,32,0.07); }
+
+  .success-note {
+    color: var(--teal-dark);
+    font-size: 0.92rem;
+    font-style: italic;
+    margin-bottom: 0.8rem;
+    text-align: left;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background: var(--teal-deep);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .toggle-link {
+    display: block;
+    margin-top: 0.9rem;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: #7a8a8a;
+  }
+  .toggle-link a {
+    color: var(--teal-dark);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(47,107,111,0.3);
+  }
+
+  #recoveryForm {
+    display: none;
+    margin-top: 1.5rem;
+    width: 100%;
+    text-align: left;
+  }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 2.4rem;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: rgba(74,92,92,0.65);
+    text-align: center;
+  }
+  .page-footer a {
+    color: var(--teal-dark);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(47,107,111,0.25);
+  }
+
+  .mockup-flag {
+    max-width: 520px;
+    width: 100%;
+    margin: 2.5rem auto 0;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<header class="qv-topbar">
+  <div class="qv-topbar-inner">
+    <span class="qv-mark"><strong>QuVive</strong> <span class="ld-brand">LinguaDepth</span></span>
+    <span class="qv-topbar-right"></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="logo-mark">LinguaDepth</div>
+  <h1 class="key-heading">Begin Your Session</h1>
+  <p class="orient-blurb">LinguaDepth teaches a language through the one you already speak &ndash; one small, real conversation at a time. Built on the same programmed-learning method as PrecisionSteps Tutorials, each lesson takes you from zero to something you can actually say, in minutes.</p>
+
+  <a href="#" class="free-trial-cta" id="freeTrialLink">Try a Free Lesson &nbsp;&rarr;</a>
+  <p class="free-trial-note">No access code needed &middot; No credit card required</p>
+
+  <div class="subscriber-divider"><span>Already a Subscriber?</span></div>
+
+  <label class="field-label" for="keyInput">Access Code</label>
+  <input type="text" id="keyInput" placeholder="LD-XXXX-XXXX" autocomplete="off" />
+  <div class="error-msg" id="keyError"></div>
+  <button class="btn-primary" id="keySubmitBtn" disabled>Open the Gate &nbsp;&rarr;</button>
+
+  <p class="toggle-link"><a href="#" id="showRecoveryBtn">Already Subscribed? Resend My Code &nbsp;&rarr;</a></p>
+
+  <div id="recoveryForm">
+    <label class="field-label" for="recoveryEmail">Your Email Address</label>
+    <input type="email" id="recoveryEmail" placeholder="you@example.com" autocomplete="email" />
+    <div class="error-msg" id="recoveryError"></div>
+    <div class="success-note" id="recoverySuccess" style="display:none;">If that email is in our system, your code is on its way.</div>
+    <button class="btn-primary" id="recoverySendBtn">Send My Code &nbsp;&rarr;</button>
+    <p class="toggle-link" style="text-align:center;"><a href="#" id="hideRecoveryBtn">Back to Access Code</a></p>
+  </div>
+
+  <p class="page-footer">
+    <a href="privacy.html">Privacy Policy</a>&nbsp;&middot;&nbsp;<a href="terms.html">Terms of Use</a>&nbsp;&middot;&nbsp;<a href="mailto:ask@linguadepth.com">ask@linguadepth.com</a>
+  </p>
+</div>
+
+<div class="mockup-flag">
+  <strong>Mockup notes for review, not shipped copy:</strong><br/>
+  1. This is Phase 1 item 1 (Access/Key screen), ported from PrecisionSteps' <code>keyScreen</code> (index.html) &ndash; same field layout, free-trial CTA, and resend-code flow, reskinned to LinguaDepth's teal palette and Georgia + Arial fonts per Decisions 11&ndash;12, with en dashes throughout per the standing formatting rule.<br/>
+  2. No access-code validation logic is wired here, per Phase 1's "no backend, no code logic yet" scope &ndash; clicking "Open the Gate" navigates straight through to the language-pair picker (<code>picker.html</code>) regardless of what's typed, purely to keep the click-through flow complete for review. Real validation is Phase 3.<br/>
+  3. Updated in v1_0_1: the Free Lesson CTA now navigates to the real free-trial entry page (<code>free-trial.html</code>, Decision 24) rather than showing a stub alert, now that Jamie has confirmed LinguaDepth keeps a free trial.<br/>
+  4. Access-code placeholder changed from PrecisionSteps' "PST-XXXX-XXXX" to "LD-XXXX-XXXX" &ndash; a proposed prefix, not confirmed.<br/>
+  5. PrecisionSteps' footer also linked an "About Us" page; that's dropped here since it isn't part of LinguaDepth's Phase 1 scope. Privacy/Terms links point to LinguaDepth-named files that don't exist yet (Phase 1 item 8, still pending) &ndash; the links are live but will 404 until those are built.<br/>
+  6. The orientation blurb is rewritten for language-learning framing (PrecisionSteps' version describes its free-text-subject model) &ndash; draft copy, not confirmed.<br/>
+  7. Heading and "Open the Gate" button text are kept as a direct port. A "depth"-themed alternative (e.g. "Enter the Depths") would match the fathom-line motif already used on the language-picker page &ndash; say the word if you'd rather reskin the copy, not just the palette.<br/>
+  8. Resend-code recovery form is a straight structural port (toggle, email field, send button) with no real email dispatch wired &ndash; clicking "Send My Code" shows a stub alert, matching item 2's treatment.
+</div>
+
+<script>
+  const keyInput = document.getElementById("keyInput");
+  const keySubmitBtn = document.getElementById("keySubmitBtn");
+  const keyError = document.getElementById("keyError");
+
+  keyInput.addEventListener("input", () => {
+    keySubmitBtn.disabled = keyInput.value.trim().length === 0;
+    keyError.textContent = "";
+  });
+
+  keySubmitBtn.addEventListener("click", () => {
+    // Stub – no real access-code check exists yet (Phase 3). Any non-empty
+    // entry passes through so the click-through flow can be reviewed end to end.
+    window.location.href = "picker.html";
+  });
+
+  document.getElementById("freeTrialLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = "free-trial.html";
+  });
+
+  const recoveryForm = document.getElementById("recoveryForm");
+  const showRecoveryBtn = document.getElementById("showRecoveryBtn");
+  const hideRecoveryBtn = document.getElementById("hideRecoveryBtn");
+
+  showRecoveryBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    recoveryForm.style.display = "block";
+  });
+  hideRecoveryBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    recoveryForm.style.display = "none";
+  });
+
+  document.getElementById("recoverySendBtn").addEventListener("click", () => {
+    const email = document.getElementById("recoveryEmail").value.trim();
+    const recoveryError = document.getElementById("recoveryError");
+    if (!email) {
+      recoveryError.textContent = "Enter an email address first.";
+      return;
+    }
+    recoveryError.textContent = "";
+    alert("Would send a code-recovery email to: " + email + " (no backend wired yet).");
+  });
+</script>
+</body>
+</html>
