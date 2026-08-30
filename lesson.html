@@ -515,8 +515,13 @@
   document.getElementById("backToCurriculumBtn").addEventListener("click", () => {
     // Carries forward whatever query params brought us here (language pair,
     // CEFR, edu level, frames) even though this page doesn't parse them itself
-    // yet (see mockup note 3) – so the curriculum page's title stays correct.
-    window.location.href = "curriculum.html" + window.location.search;
+    // yet (see mockup note 3) – plus a "completed=module1" flag so the
+    // curriculum page can show Module 1 complete / Module 2 unlocked
+    // (Phase 1 item 5). No real progress persistence yet – this is just a
+    // URL signal, not Supabase-backed tracking (that's Phase 3).
+    const params = new URLSearchParams(window.location.search);
+    params.set("completed", "module1");
+    window.location.href = "curriculum.html?" + params.toString();
   });
 
   // Loading state (Phase 1 item 3): simulate the delay of content being

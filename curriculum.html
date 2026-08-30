@@ -129,6 +129,11 @@
   .module.locked { opacity: 0.55; }
   .module.locked::before { background: #b9c4c4; }
 
+  .module.module-complete::before {
+    content: "\2713";
+    font-size: 1.05rem;
+  }
+
   .module-eyebrow {
     font-size: 0.68rem;
     letter-spacing: 0.14em;
@@ -289,7 +294,8 @@
   3. Open question I haven't resolved: is the six-lesson Module 1 the same fixed curriculum for every learner of a given target language (authored or generated once, then reused), or generated fresh per learner? Fixed-and-shared is cheaper and lets you hand-review the crucial first module; generated-per-learner costs more and is harder to quality-control for exactly the module meant to hook people.<br/>
   4. Locked-module blurbs are deliberately visible (not hidden behind a "???") – seeing what's coming is itself part of the enticement; only the lesson-by-lesson breakdown is hidden until unlocked.<br/>
   5. Fonts corrected to the platform-wide Georgia + Arial pairing (Sitrep v1.35/v1.36, 2026-08-16), matching the same fix on the intro screen.<br/>
-  6. The course title now reads from the URL (?target=fr-QC etc.), passed by the intro page's "Begin With a Pre-Built Curriculum" button – open this file directly with no parameters and it falls back to "a language" rather than guessing.
+  6. The course title now reads from the URL (?target=fr-QC etc.), passed by the intro page's "Begin With a Pre-Built Curriculum" button – open this file directly with no parameters and it falls back to "a language" rather than guessing.<br/>
+  7. Phase 1 item 5 (curriculum return state), added this pass: arriving with <code>?completed=module1</code> in the URL (set by the lesson-complete screen's "Back to Curriculum" button, Decision 34) marks Module 1 complete – checkmark circle, "Module 1 · Complete" label, Lesson 1's row shows "✓ Complete", and the Start button becomes "Review Lesson 1" – and unlocks Module 2's visual state (no longer dimmed, "Module 2 · Unlocked"). Module 2 still shows "previewed, not yet built out" with no Start button, since no actual Module 2 content exists yet – unlocking is a visual/access state, not a claim that lessons are ready. This is a URL flag only, not real progress tracking – opening this page fresh (no <code>completed</code> param) always shows the default state regardless of what you've actually done. Real persistence is Supabase-backed, Phase 3 (see Decision 8 and the curriculum-persistence open item).
 </div>
 
 <script>
@@ -317,6 +323,24 @@
   }
   // cefr/edu/frames also arrive via params but aren't surfaced on this screen
   // yet – nothing here consumes them until Module 1 actually generates frames.
+
+  // Phase 1 item 5: curriculum return state. No real progress persistence
+  // exists yet (that's Supabase-backed, Phase 3, see LDBIDL Decision 8) – for
+  // now the signal is just a URL flag set by lesson.html's "Back to
+  // Curriculum" button after finishing Lesson 1.
+  if (params.get("completed") === "module1") {
+    const module1 = document.querySelector('.module[data-depth="1"]');
+    const module2 = document.querySelector('.module[data-depth="2"]');
+
+    module1.classList.add("module-complete");
+    module1.querySelector(".module-eyebrow").textContent = "Module 1 · Complete";
+    document.getElementById("startModule1").innerHTML = "Review Lesson 1 &nbsp;&rarr;";
+    const lesson1Frames = module1.querySelector(".lesson-row .lesson-frames");
+    if (lesson1Frames) lesson1Frames.textContent = "✓ Complete";
+
+    module2.classList.remove("locked");
+    module2.querySelector(".module-eyebrow").textContent = "Module 2 · Unlocked";
+  }
 
   document.getElementById("startModule1").addEventListener("click", () => {
     window.location.href = "lesson.html?" + params.toString();
