@@ -200,6 +200,9 @@
   }
   .btn-start:hover { background: var(--teal-dark); }
 
+  .lesson-row.open { cursor: pointer; padding-left: 0.4rem; padding-right: 0.4rem; border-radius: 4px; }
+  .lesson-row.open:hover, .lesson-row.open:focus { background: var(--teal-mist); outline: none; }
+  .lesson-row.open .lesson-frames::after { content: " \00B7 Open"; color: var(--teal-dark); }
   .lesson-row.done .lesson-frames { color: var(--teal-dark); font-weight: 600; }
   .lock-note {
     font-size: 0.85rem;
@@ -379,6 +382,15 @@
     module1.classList.add("locked");
   } else {
     startBtn.onclick = () => startLesson(1);
+    // Any lesson can be opened at any time, in case a learner wants to try something else.
+    rows.forEach(r => {
+      const n = parseInt(r.dataset.n, 10);
+      r.classList.add("open");
+      r.tabIndex = 0;
+      r.setAttribute("role", "button");
+      r.addEventListener("click", () => startLesson(n));
+      r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startLesson(n); } });
+    });
     let email = "";
     try { email = (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) {}
     if (email && targetCode) {
