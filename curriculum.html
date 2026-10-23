@@ -200,6 +200,7 @@
   }
   .btn-start:hover { background: var(--teal-dark); }
 
+  .lesson-row.done .lesson-frames { color: var(--teal-dark); font-weight: 600; }
   .lock-note {
     font-size: 0.85rem;
     font-style: italic;
@@ -240,14 +241,15 @@
       <div class="module-title">On the Street</div>
       <p class="module-blurb">Six tiny, real conversations you could have within an hour of landing – before a single verb table. The point isn't completeness, it's momentum: leave this module able to actually say something.</p>
       <ul class="lesson-list">
-        <li class="lesson-row"><span class="lesson-num">1</span> Quick Hellos &amp; Goodbyes <span class="lesson-frames">6 frames</span></li>
-        <li class="lesson-row"><span class="lesson-num">2</span> "Do You Speak English?" <span class="lesson-frames">6 frames</span></li>
-        <li class="lesson-row"><span class="lesson-num">3</span> Ordering a Coffee or Snack <span class="lesson-frames">8 frames</span></li>
-        <li class="lesson-row"><span class="lesson-num">4</span> Asking for Directions <span class="lesson-frames">8 frames</span></li>
-        <li class="lesson-row"><span class="lesson-num">5</span> Small Talk About the Weather <span class="lesson-frames">6 frames</span></li>
-        <li class="lesson-row"><span class="lesson-num">6</span> Saying Thanks &amp; Parting Well <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row" data-n="1" data-frames="6"><span class="lesson-num">1</span> Quick Hellos &amp; Goodbyes <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row" data-n="2" data-frames="6"><span class="lesson-num">2</span> "Do You Speak English?" <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row" data-n="3" data-frames="8"><span class="lesson-num">3</span> Ordering a Coffee or Snack <span class="lesson-frames">8 frames</span></li>
+        <li class="lesson-row" data-n="4" data-frames="8"><span class="lesson-num">4</span> Asking for Directions <span class="lesson-frames">8 frames</span></li>
+        <li class="lesson-row" data-n="5" data-frames="6"><span class="lesson-num">5</span> Small Talk About the Weather <span class="lesson-frames">6 frames</span></li>
+        <li class="lesson-row" data-n="6" data-frames="6"><span class="lesson-num">6</span> Saying Thanks &amp; Parting Well <span class="lesson-frames">6 frames</span></li>
       </ul>
       <button class="btn-start" id="startModule1">Start Lesson 1 &nbsp;&rarr;</button>
+      <p class="lock-note" id="comingSoonNote" style="display:none;">The curriculum for this level is coming soon. Single lessons are available at every level.</p>
     </div>
 
     <div class="module locked" data-depth="2">
@@ -320,30 +322,68 @@
   if (targetCode && LANGUAGES[targetCode]) {
     courseLangName.textContent = LANGUAGES[targetCode];
   }
-  // cefr/edu/frames also arrive via params but aren't surfaced on this screen
-  // yet – nothing here consumes them until Module 1 actually generates frames.
+  const cefr = (params.get("cefr") || "A1").toUpperCase();
+  const FUNCTION_URL = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
+  const LAUNCH_LEVELS = ["A1", "A2", "B1"];
+  const startBtn = document.getElementById("startModule1");
+  const module1 = document.querySelector('.module[data-depth="1"]');
+  const module2 = document.querySelector('.module[data-depth="2"]');
+  const rows = Array.from(module1.querySelectorAll(".lesson-row"));
 
-  // Phase 1 item 5: curriculum return state. No real progress persistence
-  // exists yet (that's Supabase-backed, Phase 3, see LDBIDL Decision 8) – for
-  // now the signal is just a URL flag set by lesson.html's "Back to
-  // Curriculum" button after finishing Lesson 1.
-  if (params.get("completed") === "module1") {
-    const module1 = document.querySelector('.module[data-depth="1"]');
-    const module2 = document.querySelector('.module[data-depth="2"]');
-
-    module1.classList.add("module-complete");
-    module1.querySelector(".module-eyebrow").textContent = "Module 1 · Complete";
-    document.getElementById("startModule1").innerHTML = "Review Lesson 1 &nbsp;&rarr;";
-    const lesson1Frames = module1.querySelector(".lesson-row .lesson-frames");
-    if (lesson1Frames) lesson1Frames.textContent = "✓ Complete";
-
-    module2.classList.remove("locked");
-    module2.querySelector(".module-eyebrow").textContent = "Module 2 · Unlocked";
+  function startLesson(n) {
+    const q = new URLSearchParams(params.toString());
+    q.set("lessonNo", String(n));
+    window.location.href = "lesson.html?" + q.toString();
   }
 
-  document.getElementById("startModule1").addEventListener("click", () => {
-    window.location.href = "lesson.html?" + params.toString();
-  });
+  function applyProgress(list) {
+    // counts[n] = how many times lesson n has been completed (any variant).
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    list.forEach(p => { if (p.lesson_no >= 1 && p.lesson_no <= 6) counts[p.lesson_no]++; });
+    const lows = counts.slice(1);
+    const minCount = Math.min.apply(null, lows);
+    const allEqual = lows.every(x => x === lows[0]);
+    const moduleDone = allEqual && minCount >= 1;
+    // Lessons done in the current pass; when every lesson is done the whole module shows complete.
+    rows.forEach(r => {
+      const n = parseInt(r.dataset.n, 10);
+      const done = moduleDone || counts[n] > minCount;
+      r.classList.toggle("done", done);
+      r.querySelector(".lesson-frames").textContent = done ? "\u2713 Complete" : r.dataset.frames + " frames";
+    });
+    let next = 1;
+    if (!moduleDone) { for (let n = 1; n <= 6; n++) { if (counts[n] === minCount) { next = n; break; } } }
+    if (moduleDone) {
+      module1.classList.add("module-complete");
+      module1.querySelector(".module-eyebrow").textContent = "Module 1 \u00B7 Complete";
+      startBtn.innerHTML = "Practise Again With New Lessons &nbsp;&rarr;";
+    } else if (minCount >= 1 || counts[next] > 0 || lows.some(x => x > 0)) {
+      startBtn.innerHTML = "Continue With Lesson " + next + " &nbsp;&rarr;";
+    }
+    if (minCount >= 1) {
+      module2.classList.remove("locked");
+      module2.querySelector(".module-eyebrow").textContent = "Module 2 \u00B7 Unlocked";
+    }
+    startBtn.onclick = () => startLesson(next);
+  }
+
+  if (!LAUNCH_LEVELS.includes(cefr)) {
+    startBtn.style.display = "none";
+    document.getElementById("comingSoonNote").style.display = "block";
+    module1.querySelector(".module-eyebrow").textContent = "Module 1 \u00B7 Coming Soon";
+    module1.classList.add("locked");
+  } else {
+    startBtn.onclick = () => startLesson(1);
+    let email = "";
+    try { email = (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) {}
+    if (email && targetCode) {
+      fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessCode: "TRIAL-FREE", trialEmail: email, source: params.get("source") || "en", target: targetCode, cefr: cefr, action: "progress" })
+      }).then(r => r.json()).then(d => { if (d && Array.isArray(d.progress)) applyProgress(d.progress); }).catch(() => {});
+    }
+  }
 </script>
 </body>
 </html>

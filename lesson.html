@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LinguaDepth – Lesson 1</title>
+<title>LinguaDepth – Lesson</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -255,6 +255,42 @@
   .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  .mockup-flag {
+    max-width: 700px;
+    margin: 2.4rem auto 0;
+    text-align: left;
+    background: rgba(255,255,255,0.55);
+    border: 1px dashed rgba(47,107,111,0.4);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #3d4e4e;
+  }
+  .mockup-flag strong { color: var(--teal-dark); }
+
+  /* ── Error state (Stage B): shown when a lesson cannot be prepared ── */
+  .error-wrap { max-width: 620px; width: 100%; margin: 0 auto; display: none; }
+  .error-card {
+    background: var(--cream-card);
+    border: 1px solid rgba(47,107,111,0.2);
+    border-radius: 6px;
+    padding: 3rem 3.2rem;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(22,53,56,0.08);
+  }
+  .error-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.6rem; font-weight: 400; color: var(--ink); margin-bottom: 0.8rem;
+  }
+  .error-text {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem; color: #4a5c5c; line-height: 1.6; margin-bottom: 1.8rem;
+  }
+  .example-translation {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95rem; color: #4a5c5c; margin-top: 0.5rem; font-style: italic;
+  }
 
   /* ── Loading state (Phase 1 item 3): shown while lesson content is
      "being generated" – in Phase 3 this becomes the real wait on the
@@ -472,10 +508,21 @@
     <div class="complete-card">
       <div class="complete-label">Lesson Complete</div>
       <h2 class="complete-title">Nice work.</h2>
-      <p class="complete-sub" id="completeSubText">You've completed Lesson 1 of 6 in Module 1: On the Street.</p>
+      <p class="complete-sub" id="completeSubText">You've completed this lesson.</p>
       <div class="complete-btn-row">
         <button class="btn-primary" id="nextLessonBtn" style="width:auto;">Next Lesson &nbsp;&rarr;</button>
         <button class="btn-secondary" id="backToCurriculumBtn">Back to Curriculum &nbsp;&rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-wrap" id="errorState">
+    <div class="error-card">
+      <h2 class="error-title" id="errorTitle">Your Lesson Could Not Be Prepared</h2>
+      <p class="error-text" id="errorText"></p>
+      <div class="complete-btn-row">
+        <button class="btn-primary" id="errorPrimaryBtn" style="width:auto;">Try Again &nbsp;&rarr;</button>
+        <button class="btn-secondary" id="errorSecondaryBtn">Back to Curriculum &nbsp;&rarr;</button>
       </div>
     </div>
   </div>
@@ -510,6 +557,11 @@
 </div>
 
 <script>
+  // Phase 1 item 6: this path reads its settings from real URL params
+  // (set by picker.html's "Begin With a Single Lesson" button) rather than
+  // hardcoding badge values the way the curriculum-path lesson page still
+  // does (see that file's mockup note 3) – a fresh build was the chance to
+  // do this properly from the start.
   const LANGUAGES = {
     "en": "English",
     "sq": "Albanian",
@@ -543,41 +595,60 @@
     "sv": "Swedish",
     "tr": "Turkish",
     "uk": "Ukrainian"
-  };
+  };  const slParams = new URLSearchParams(window.location.search);
+  const slTarget = slParams.get("target") || "fr-QC";
+  const slCefr = slParams.get("cefr") || "B1";
+  const slLessonNo = Math.min(Math.max(parseInt(slParams.get("lessonNo"), 10) || 1, 1), 6);
+  document.getElementById("badgeLang").textContent = LANGUAGES[slTarget] || slTarget;
+  document.getElementById("badgeCefr").textContent = slCefr;
+  document.getElementById("badgeFrames").textContent = `Lesson ${slLessonNo} of 6`;
+  let lessonVariant = 0;
+  let lessonTitle = "";
 
-  // Session badges read from the URL params the curriculum page forwards
-  // ("Start" button on curriculum.html). The frame-count badge stays at 6:
-  // that is Lesson 1's own frame count on the curriculum page, not the
-  // picker's lesson-length slider (which applies to the single-lesson path).
-  const lessonParams = new URLSearchParams(window.location.search);
-  const lessonTarget = lessonParams.get("target");
-  const lessonCefr = lessonParams.get("cefr");
-  if (lessonTarget) document.getElementById("badgeLang").textContent = LANGUAGES[lessonTarget] || lessonTarget;
-  if (lessonCefr) document.getElementById("badgeCefr").textContent = lessonCefr;
+  const FUNCTION_URL = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
+  const slSource = slParams.get("source") || "en";
+  const slEdu = slParams.get("edu") || "";
 
-  const speakerIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.06c1.5-.74 2.5-2.26 2.5-4.03z"/></svg>`;
+  // The generated frames, expanded into cards: each frame becomes a Teach card
+  // followed by a Question card (and the answer view), as in PrecisionSteps.
+  let frames = [];
+  let totalFrames = 0;
+  let trialNote = "";
 
-  function vocalize(text, kind) {
-    // Stub – wiring deferred. Would call a TTS provider and play the
-    // returned audio; see LDBIDL Decision 9 (and Decision 10 for Mohawk's
-    // separate, non-TTS pipeline).
-    alert(`Would vocalize (${kind}): "${text}"`);
+  function savedTrialEmail() {
+    try { return (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) { return ""; }
   }
 
-  const frames = [
-    {
-      type: "teach",
-      lesson: `In Québécois French, the most common everyday greeting is <strong>Bonjour</strong> <button class="vocalize-word" onclick="vocalize('Bonjour','word')" aria-label="Listen to Bonjour">${speakerIcon}</button> – used for both "hello" and "good day," any time before evening. Unlike English, Québécois speakers often follow it immediately with a quick check-in.`,
-      example: "Bonjour, comment ça va?"
-    },
-    {
-      type: "question",
-      question: "Which of these best fits a casual, spoken greeting when meeting a friend on the street?",
-      options: ["Bonjour, comment ça va?", "Veuillez agréer mes salutations distinguées.", "Objection, Votre Honneur.", "Le rapport est en cours de rédaction."],
-      correctIndex: 0,
-      explanation: `"Bonjour, comment ça va?" ("Hi, how's it going?") is the natural, casual register for a street greeting – the others are formal correspondence, courtroom language, and office jargon respectively.`
-    }
-  ];
+  // Put the correct answer in a random position, never the same place twice in a row.
+  function shuffleAnswers(list) {
+    let last = -1;
+    list.forEach(f => {
+      let idx;
+      do { idx = Math.floor(Math.random() * 4); } while (idx === last);
+      const correct = f.options[f.correct_index];
+      const others = f.options.filter((_, j) => j !== f.correct_index);
+      for (let k = others.length - 1; k > 0; k--) {
+        const r = Math.floor(Math.random() * (k + 1));
+        [others[k], others[r]] = [others[r], others[k]];
+      }
+      others.splice(idx, 0, correct);
+      f.options = others;
+      f.correct_index = idx;
+      last = idx;
+    });
+    return list;
+  }
+
+  // The function turns **bold** into <strong>; a model sometimes also writes *italic*.
+  function italics(t) { return String(t).replace(/\*([^*<>]+?)\*/g, "<em>$1</em>"); }
+  function expandCards(list) {
+    const cards = [];
+    list.forEach((f, i) => {
+      cards.push({ type: "teach", n: i + 1, lesson: italics(f.lesson), example: f.example, translation: f.translation, is_review: f.is_review });
+      cards.push({ type: "question", n: i + 1, question: f.question, options: f.options, correctIndex: f.correct_index, explanation: italics(f.explanation), is_review: f.is_review });
+    });
+    return cards;
+  }
 
   let currentFrame = 0;
   let selectedOption = null;
@@ -586,7 +657,8 @@
   function renderCard() {
     const frame = frames[currentFrame];
     const card = document.getElementById("card");
-    document.getElementById("pageCounter").textContent = `Frame ${currentFrame + 1} of ${frames.length}`;
+    const reviewTag = frame.is_review ? " – Review" : "";
+    document.getElementById("pageCounter").textContent = `Frame ${frame.n} of ${totalFrames}${reviewTag}`;
     document.getElementById("progressFill").style.width = `${Math.round(((currentFrame + 1) / frames.length) * 100)}%`;
 
     if (frame.type === "teach") {
@@ -594,10 +666,8 @@
         <div>
           <div class="frame-type">Teach</div>
           <p class="lesson-text">${frame.lesson}</p>
-          <div class="example-line">
-            <button class="vocalize-sentence" onclick="vocalize('${frame.example}','sentence')" aria-label="Listen to example sentence">${speakerIcon}</button>
-            <span>${frame.example}</span>
-          </div>
+          <div class="example-line"><span>${frame.example}</span></div>
+          <p class="example-translation">${frame.translation}</p>
         </div>
         <div class="btn-row"><button class="btn-primary" id="actionBtn">Continue &nbsp;&rarr;</button></div>
       `;
@@ -644,33 +714,48 @@
     }
   }
 
+  let savePromise = Promise.resolve();
+  async function saveProgress() {
+    // Records this lesson as complete. A failure here never blocks the learner.
+    try {
+      await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessCode: "TRIAL-FREE", trialEmail: savedTrialEmail(),
+          source: slSource, target: slTarget, cefr: slCefr,
+          action: "complete", lessonNo: slLessonNo, variant: lessonVariant
+        })
+      });
+    } catch (e) { /* ignore */ }
+  }
   function showComplete() {
     document.getElementById("card").style.display = "none";
     document.querySelector(".progress-bar").style.display = "none";
     document.querySelector(".page-counter").style.display = "none";
     document.querySelector(".session-badge").style.display = "none";
     document.getElementById("aiNotice").style.display = "none";
+    document.getElementById("completeSubText").textContent =
+      `You've completed Lesson ${slLessonNo} of 6 in Module 1: On the Street.` + (trialNote ? " " + trialNote : "");
+    if (slLessonNo >= 6) document.getElementById("nextLessonBtn").style.display = "none";
     document.getElementById("completeState").style.display = "block";
+    savePromise = saveProgress();
   }
-
-  document.getElementById("nextLessonBtn").addEventListener("click", () => {
-    // Stub – Lesson 2 doesn't exist yet. Module 1's other five lessons are
-    // previewed on the curriculum page but not built out (see LDBIDL Part III).
-    alert("Would advance to Lesson 2: \"Do You Speak English?\" – not built yet.");
+  function curriculumUrl() {
+    const q = new URLSearchParams(window.location.search);
+    q.delete("lessonNo");
+    return "curriculum.html?" + q.toString();
+  }
+  document.getElementById("nextLessonBtn").addEventListener("click", async () => {
+    await savePromise;
+    const q = new URLSearchParams(window.location.search);
+    q.set("lessonNo", String(Math.min(slLessonNo + 1, 6)));
+    window.location.href = "lesson.html?" + q.toString();
   });
-
-  document.getElementById("backToCurriculumBtn").addEventListener("click", () => {
-    // Carries forward whatever query params brought us here (language pair,
-    // CEFR, edu level, frames) even though this page doesn't parse them itself
-    // yet (see mockup note 3) – plus a "completed=module1" flag so the
-    // curriculum page can show Module 1 complete / Module 2 unlocked
-    // (Phase 1 item 5). No real progress persistence yet – this is just a
-    // URL signal, not Supabase-backed tracking (that's Phase 3).
-    const params = new URLSearchParams(window.location.search);
-    params.set("completed", "module1");
-    window.location.href = "curriculum.html?" + params.toString();
+  document.getElementById("backToCurriculumBtn").addEventListener("click", async () => {
+    await savePromise;
+    window.location.href = curriculumUrl();
   });
-
   // Report a Problem (mockup): opens a small form, lets the learner pick what
   // went wrong, and shows a thank-you. Nothing is sent anywhere yet – in
   // Phase 3 the Send button posts the report (frame, language, category,
@@ -683,7 +768,7 @@
       const lang = document.getElementById("badgeLang").textContent;
       const cefr = document.getElementById("badgeCefr").textContent;
       document.getElementById("reportContext").textContent =
-        `Frame ${currentFrame + 1} of ${frames.length} – ${lang}, ${cefr}`;
+        `Frame ${frames[currentFrame] ? frames[currentFrame].n : 1} of ${totalFrames} – ${lang}, ${cefr}`;
       chosen = null;
       document.querySelectorAll(".report-cat").forEach(b => b.classList.remove("active"));
       document.getElementById("reportNote").value = "";
@@ -711,15 +796,83 @@
     });
   })();
 
-  // Loading state (Phase 1 item 3): simulate the delay of content being
-  // generated. In Phase 3 this becomes the real await on the Supabase Edge
-  // Function call, and the spinner shows until that promise resolves instead
-  // of a fixed timeout.
-  setTimeout(() => {
+  // Loading: asks the generate-lesson function for the lesson; the spinner
+  // shows until it answers. Errors show a Try Again screen instead.
+  function showError(title, text, primaryLabel, primaryAction) {
     document.getElementById("loadingState").style.display = "none";
-    document.getElementById("lessonContent").style.display = "block";
-    renderCard();
-  }, 1500);
+    document.getElementById("lessonContent").style.display = "none";
+    document.getElementById("errorTitle").textContent = title;
+    document.getElementById("errorText").textContent = text;
+    const p = document.getElementById("errorPrimaryBtn");
+    p.innerHTML = primaryLabel + " &nbsp;&rarr;";
+    p.onclick = primaryAction;
+    document.getElementById("errorSecondaryBtn").onclick = () => { window.location.href = curriculumUrl(); };
+    document.getElementById("errorState").style.display = "block";
+  }
+
+  async function loadLesson() {
+    const email = savedTrialEmail();
+    if (!email) {
+      showError("Please Start Your Free Trial",
+        "We need the email address for your free trial before we can prepare a lesson.",
+        "Start Free Trial", () => { window.location.href = "free-trial.html"; });
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 110000);
+    try {
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          accessCode: "TRIAL-FREE",
+          trialEmail: email,
+          source: slSource,
+          target: slTarget,
+          cefr: slCefr,
+          edu: slEdu,
+          mode: "curriculum",
+          lessonNo: slLessonNo
+        })
+      });
+      clearTimeout(timer);
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403 && data.trialComplete) {
+        showError("Your Free Lessons Are Complete",
+          (data.error && data.error.message) || "You have used all of your free lessons.",
+          "Back to Start", () => { window.location.href = "index.html"; });
+        return;
+      }
+      if (res.status === 404 && data.comingSoon) {
+        showError("Coming Soon",
+          "The curriculum for this level is on its way. Single lessons are available at every level.",
+          "Back to Curriculum", () => { window.location.href = curriculumUrl(); });
+        return;
+      }
+      if (!res.ok || !Array.isArray(data.frames) || data.frames.length === 0) {
+        throw new Error((data.error && data.error.message) || "No lesson returned.");
+      }
+      totalFrames = data.frames.length;
+      frames = expandCards(shuffleAnswers(data.frames));
+      if (data.lesson) { lessonVariant = data.lesson.variant; lessonTitle = data.lesson.title; }
+      document.getElementById("badgeFrames").textContent = `Lesson ${slLessonNo} of 6 · ${totalFrames} Frames`;
+      if (typeof data.lessonsUsed === "number" && typeof data.trialLimit === "number") {
+        const left = Math.max(0, data.trialLimit - data.lessonsUsed);
+        trialNote = `${left} free ${left === 1 ? "lesson" : "lessons"} remaining in your trial.`;
+      }
+      currentFrame = 0; selectedOption = null; answered = false;
+      document.getElementById("loadingState").style.display = "none";
+      document.getElementById("lessonContent").style.display = "block";
+      renderCard();
+    } catch (err) {
+      clearTimeout(timer);
+      showError("Your Lesson Could Not Be Prepared",
+        "Something went wrong while preparing your lesson. Please check your connection and try again.",
+        "Try Again", () => { window.location.reload(); });
+    }
+  }
+  loadLesson();
 </script>
 </body>
 </html>
