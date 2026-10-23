@@ -282,8 +282,9 @@
   ageCheck.addEventListener("change", checkEntryReady);
 
   beginTrialBtn.addEventListener("click", () => {
-    // Stub – no real email capture or trial-session logic exists yet (Phase 3).
-    // Hands off to the language-pair picker to keep the click-through reviewable.
+    // Keeps the trial email for this browser so the lesson pages can pass it to the
+    // lesson function, which counts free lessons per email on the server.
+    try { localStorage.setItem("ld_trial_email", trialEmail.value.trim().toLowerCase()); } catch (e) {}
     window.location.href = "picker.html";
   });
 </script>
