@@ -618,6 +618,16 @@
     try { return (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) { return ""; }
   }
 
+  function savedCode() {
+    try { return (localStorage.getItem("ld_access_code") || "").trim(); } catch (e) { return ""; }
+  }
+  // A subscriber's access code takes priority; otherwise the free-trial email is used.
+  function credentials() {
+    const c = savedCode();
+    if (c) return { accessCode: c };
+    const e = savedTrialEmail();
+    return e ? { accessCode: "TRIAL-FREE", trialEmail: e } : null;
+  }
   // Put the correct answer in a random position, never the same place twice in a row.
   function shuffleAnswers(list) {
     let last = -1;
@@ -791,8 +801,8 @@
   }
 
   async function loadLesson() {
-    const email = savedTrialEmail();
-    if (!email) {
+    const cred = credentials();
+    if (!cred) {
       showError("Please Start Your Free Trial",
         "We need the email address for your free trial before we can prepare a lesson.",
         "Start Free Trial", () => { window.location.href = "free-trial.html"; });
@@ -806,8 +816,7 @@
         headers: { "Content-Type": "application/json" },
         signal: ctrl.signal,
         body: JSON.stringify({
-          accessCode: "TRIAL-FREE",
-          trialEmail: email,
+          ...cred,
           source: slSource,
           target: slTarget,
           cefr: slCefr,
@@ -821,6 +830,12 @@
         showError("Your Free Lessons Are Complete",
           (data.error && data.error.message) || "You have used all of your free lessons.",
           "Back to Start", () => { window.location.href = "index.html"; });
+        return;
+      }
+      if (res.status === 401) {
+        showError("Please Sign In Again",
+          "Your access code was not accepted. Please enter it again on the home page.",
+          "Go to Home", () => { window.location.href = "index.html"; });
         return;
       }
       if (!res.ok || !Array.isArray(data.frames) || data.frames.length === 0) {

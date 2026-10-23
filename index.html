@@ -294,10 +294,30 @@
     keyError.textContent = "";
   });
 
-  keySubmitBtn.addEventListener("click", () => {
-    // Stub – no real access-code check exists yet (Phase 3). Any non-empty
-    // entry passes through so the click-through flow can be reviewed end to end.
-    window.location.href = "picker.html";
+  keySubmitBtn.addEventListener("click", async () => {
+    const code = keyInput.value.trim().toUpperCase();
+    if (!code) return;
+    keySubmitBtn.disabled = true;
+    keyError.textContent = "";
+    try {
+      // The code is checked by the lesson service; a good code answers with a progress list.
+      const res = await fetch("https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessCode: code, action: "progress", source: "en", target: "fr-FR", cefr: "A1" })
+      });
+      if (res.ok) {
+        try { localStorage.setItem("ld_access_code", code); } catch (e) {}
+        window.location.href = "picker.html";
+        return;
+      }
+      keyError.textContent = res.status === 429
+        ? "Too many attempts. Please try again later."
+        : "That access code was not recognised. Please check it and try again.";
+    } catch (e) {
+      keyError.textContent = "Something went wrong. Please check your connection and try again.";
+    }
+    keySubmitBtn.disabled = false;
   });
 
   document.getElementById("freeTrialLink").addEventListener("click", (e) => {

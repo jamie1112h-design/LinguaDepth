@@ -619,6 +619,16 @@
     try { return (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) { return ""; }
   }
 
+  function savedCode() {
+    try { return (localStorage.getItem("ld_access_code") || "").trim(); } catch (e) { return ""; }
+  }
+  // A subscriber's access code takes priority; otherwise the free-trial email is used.
+  function credentials() {
+    const c = savedCode();
+    if (c) return { accessCode: c };
+    const e = savedTrialEmail();
+    return e ? { accessCode: "TRIAL-FREE", trialEmail: e } : null;
+  }
   // Put the correct answer in a random position, never the same place twice in a row.
   function shuffleAnswers(list) {
     let last = -1;
@@ -722,7 +732,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accessCode: "TRIAL-FREE", trialEmail: savedTrialEmail(),
+          ...(credentials() || {}),
           source: slSource, target: slTarget, cefr: slCefr,
           action: "complete", lessonNo: slLessonNo, variant: lessonVariant
         })
@@ -811,8 +821,8 @@
   }
 
   async function loadLesson() {
-    const email = savedTrialEmail();
-    if (!email) {
+    const cred = credentials();
+    if (!cred) {
       showError("Please Start Your Free Trial",
         "We need the email address for your free trial before we can prepare a lesson.",
         "Start Free Trial", () => { window.location.href = "free-trial.html"; });
@@ -826,8 +836,7 @@
         headers: { "Content-Type": "application/json" },
         signal: ctrl.signal,
         body: JSON.stringify({
-          accessCode: "TRIAL-FREE",
-          trialEmail: email,
+          ...cred,
           source: slSource,
           target: slTarget,
           cefr: slCefr,
@@ -848,6 +857,12 @@
         showError("Coming Soon",
           "The curriculum for this level is on its way. Single lessons are available at every level.",
           "Back to Curriculum", () => { window.location.href = curriculumUrl(); });
+        return;
+      }
+      if (res.status === 401) {
+        showError("Please Sign In Again",
+          "Your access code was not accepted. Please enter it again on the home page.",
+          "Go to Home", () => { window.location.href = "index.html"; });
         return;
       }
       if (!res.ok || !Array.isArray(data.frames) || data.frames.length === 0) {

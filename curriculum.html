@@ -391,13 +391,18 @@
       r.addEventListener("click", () => startLesson(n));
       r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startLesson(n); } });
     });
-    let email = "";
-    try { email = (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) {}
-    if (email && targetCode) {
+    let cred = null;
+    try {
+      const code = (localStorage.getItem("ld_access_code") || "").trim();
+      const email = (localStorage.getItem("ld_trial_email") || "").trim();
+      if (code) cred = { accessCode: code };
+      else if (email) cred = { accessCode: "TRIAL-FREE", trialEmail: email };
+    } catch (e) {}
+    if (cred && targetCode) {
       fetch(FUNCTION_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessCode: "TRIAL-FREE", trialEmail: email, source: params.get("source") || "en", target: targetCode, cefr: cefr, action: "progress" })
+        body: JSON.stringify({ ...cred, source: params.get("source") || "en", target: targetCode, cefr: cefr, action: "progress" })
       }).then(r => r.json()).then(d => { if (d && Array.isArray(d.progress)) applyProgress(d.progress); }).catch(() => {});
     }
   }
