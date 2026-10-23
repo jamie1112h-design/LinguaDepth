@@ -217,19 +217,6 @@
     margin-right: auto;
   }
 
-  .mockup-flag {
-    max-width: 680px;
-    margin: 2.5rem auto 0;
-    text-align: left;
-    background: rgba(255,255,255,0.55);
-    border: 1px dashed rgba(47,107,111,0.4);
-    border-radius: 4px;
-    padding: 0.9rem 1.1rem;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: #3d4e4e;
-  }
-  .mockup-flag strong { color: var(--teal-dark); }
 </style>
 </head>
 <body>
@@ -285,17 +272,6 @@
   </div>
 
   <a href="#" class="back-link">&larr; Change Language</a>
-</div>
-
-<div class="mockup-flag">
-  <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. Module 1's six lesson titles and Module 2–4's names/blurbs are content proposals from me, not yet confirmed by you – the "street conversations first" ordering is your instruction; the specific topics inside it are my draft.<br/>
-  2. Real architecture question this raises: PrecisionSteps generates one free-text subject per session with no memory between visits. A curriculum needs the opposite – a fixed sequence that persists across a learner's visits and tracks which module/lesson they've completed. That's a genuine new piece (a `curriculum` and `progress` table in Supabase, keyed to the access code), not something the existing engine does today – worth its own decision before backend work starts.<br/>
-  3. Open question I haven't resolved: is the six-lesson Module 1 the same fixed curriculum for every learner of a given target language (authored or generated once, then reused), or generated fresh per learner? Fixed-and-shared is cheaper and lets you hand-review the crucial first module; generated-per-learner costs more and is harder to quality-control for exactly the module meant to hook people.<br/>
-  4. Locked-module blurbs are deliberately visible (not hidden behind a "???") – seeing what's coming is itself part of the enticement; only the lesson-by-lesson breakdown is hidden until unlocked.<br/>
-  5. Fonts corrected to the platform-wide Georgia + Arial pairing (Sitrep v1.35/v1.36, 2026-08-16), matching the same fix on the intro screen.<br/>
-  6. The course title now reads from the URL (?target=fr-QC etc.), passed by the intro page's "Begin With a Pre-Built Curriculum" button – open this file directly with no parameters and it falls back to "a language" rather than guessing.<br/>
-  7. Phase 1 item 5 (curriculum return state), added this pass: arriving with <code>?completed=module1</code> in the URL (set by the lesson-complete screen's "Back to Curriculum" button, Decision 34) marks Module 1 complete – checkmark circle, "Module 1 · Complete" label, Lesson 1's row shows "✓ Complete", and the Start button becomes "Review Lesson 1" – and unlocks Module 2's visual state (no longer dimmed, "Module 2 · Unlocked"). Module 2 still shows "previewed, not yet built out" with no Start button, since no actual Module 2 content exists yet – unlocking is a visual/access state, not a claim that lessons are ready. This is a URL flag only, not real progress tracking – opening this page fresh (no <code>completed</code> param) always shows the default state regardless of what you've actually done. Real persistence is Supabase-backed, Phase 3 (see Decision 8 and the curriculum-persistence open item).
 </div>
 
 <script>

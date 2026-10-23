@@ -253,19 +253,6 @@
   .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .mockup-flag {
-    max-width: 700px;
-    margin: 2.4rem auto 0;
-    text-align: left;
-    background: rgba(255,255,255,0.55);
-    border: 1px dashed rgba(47,107,111,0.4);
-    border-radius: 4px;
-    padding: 0.9rem 1.1rem;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: #3d4e4e;
-  }
-  .mockup-flag strong { color: var(--teal-dark); }
 
   /* ── Loading state (Phase 1 item 3): shown while lesson content is
      "being generated" – in Phase 3 this becomes the real wait on the
@@ -490,17 +477,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<div class="mockup-flag">
-  <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. This is Lesson 1 of Module 1 ("Quick Hellos & Goodbyes") with two demo frames wired to cycle – a teaching frame and a question/answer frame – so the three-state loop (teach → question → answer) is visible and clickable, not just described. A real lesson would have as many frames as the frame-count setting.<br/>
-  2. Vocalize icons are placed but not wired – clicking either one shows an alert naming what would be spoken and in what language, per your "sort out the wiring later" instruction.<br/>
-  3. The language and CEFR badges now read from the URL params the curriculum page forwards; opened directly with no params they fall back to French (Québécois) and B1. The frame-count badge stays at 6, which is Lesson 1's own frame count on the curriculum page, not the picker's lesson-length slider. The lesson content itself is still the same placeholder French (Québécois) demo whatever language is chosen, so the badge and the content will not match until real generation exists (Phase 3).<br/>
-  4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.<br/>
-  5. Phase 1 item 3 (loading state), added this pass: a spinner + "Composing your lesson…" shows for a fixed 1.5 seconds before the frame content appears, ported from PrecisionSteps' `loadingScreen` pattern (spinner markup and timing) and reskinned to the teal palette. This is a simulated delay only – in Phase 3, this becomes the real wait on the Supabase Edge Function call that generates the lesson, and the fixed timeout goes away entirely in favor of showing the spinner until that call actually resolves.<br/>
-  6. Phase 1 item 4 (lesson-complete screen), added this pass: replaces the old bare `alert()` with a designed state (completion message, progress line, and a "Next Lesson" vs. "Back to Curriculum" choice), ported from PrecisionSteps' `completeScreen` structure and reskinned. "Next Lesson" is a stub alert since Lesson 2 doesn't exist yet – only Lesson 1 has real content built. "Back to Curriculum" navigates for real, forwarding the current URL's query string so the curriculum page's title stays correct. Not in scope here: reflecting the completion on the curriculum page itself (Module 1 marked done, Module 2 unlocked) – that's Phase 1 item 5, not yet built, so returning to the curriculum still shows the same static locked/unlocked layout regardless of this completion.<br/>
-  7. Added this pass: a one-line notice under the session badges ("Lessons are AI-generated and may contain mistakes.") and a Report a Problem button below the lesson card. The button opens a small form – pick what went wrong (Wrong Translation, Wrong Grammar, Wrong Spelling or Accent, Inappropriate Content, Something Else), add an optional note, send. It is display only for now: nothing is sent anywhere. In Phase 3 the report (frame, language, category, note) goes to a Supabase table through an Edge Function. The notice is hidden on the lesson-complete screen; the button stays.
 </div>
 
 <div class="report-overlay" id="reportOverlay" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
