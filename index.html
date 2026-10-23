@@ -243,20 +243,6 @@
     border-bottom: 1px solid rgba(47,107,111,0.25);
   }
 
-  .mockup-flag {
-    max-width: 520px;
-    width: 100%;
-    margin: 2.5rem auto 0;
-    text-align: left;
-    background: rgba(255,255,255,0.55);
-    border: 1px dashed rgba(47,107,111,0.4);
-    border-radius: 4px;
-    padding: 0.9rem 1.1rem;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: #3d4e4e;
-  }
-  .mockup-flag strong { color: var(--teal-dark); }
 </style>
 </head>
 <body>
@@ -296,18 +282,6 @@
   <p class="page-footer">
     <a href="privacy.html">Privacy Policy</a>&nbsp;&middot;&nbsp;<a href="terms.html">Terms of Use</a>&nbsp;&middot;&nbsp;<a href="mailto:ask@linguadepth.com">ask@linguadepth.com</a>
   </p>
-</div>
-
-<div class="mockup-flag">
-  <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. This is Phase 1 item 1 (Access/Key screen), ported from PrecisionSteps' <code>keyScreen</code> (index.html) &ndash; same field layout, free-trial CTA, and resend-code flow, reskinned to LinguaDepth's teal palette and Georgia + Arial fonts per Decisions 11&ndash;12, with en dashes throughout per the standing formatting rule.<br/>
-  2. No access-code validation logic is wired here, per Phase 1's "no backend, no code logic yet" scope &ndash; clicking "Open the Gate" navigates straight through to the language-pair picker (<code>picker.html</code>) regardless of what's typed, purely to keep the click-through flow complete for review. Real validation is Phase 3.<br/>
-  3. Updated in v1_0_1: the Free Lesson CTA now navigates to the real free-trial entry page (<code>free-trial.html</code>, Decision 24) rather than showing a stub alert, now that Jamie has confirmed LinguaDepth keeps a free trial.<br/>
-  4. Access-code placeholder changed from PrecisionSteps' "PST-XXXX-XXXX" to "LD-XXXX-XXXX" &ndash; a proposed prefix, not confirmed.<br/>
-  5. PrecisionSteps' footer also linked an "About Us" page; that's dropped here since it isn't part of LinguaDepth's Phase 1 scope. Privacy/Terms links point to LinguaDepth-named files that don't exist yet (Phase 1 item 8, still pending) &ndash; the links are live but will 404 until those are built.<br/>
-  6. The orientation blurb is rewritten for language-learning framing (PrecisionSteps' version describes its free-text-subject model) &ndash; draft copy, not confirmed.<br/>
-  7. Heading and "Open the Gate" button text are kept as a direct port. A "depth"-themed alternative (e.g. "Enter the Depths") would match the fathom-line motif already used on the language-picker page &ndash; say the word if you'd rather reskin the copy, not just the palette.<br/>
-  8. Resend-code recovery form is a straight structural port (toggle, email field, send button) with no real email dispatch wired &ndash; clicking "Send My Code" shows a stub alert, matching item 2's treatment.
 </div>
 
 <script>

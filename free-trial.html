@@ -209,20 +209,6 @@
     border-bottom: 1px solid rgba(47,107,111,0.25);
   }
 
-  .mockup-flag {
-    max-width: 520px;
-    width: 100%;
-    margin: 2.5rem auto 0;
-    text-align: left;
-    background: rgba(255,255,255,0.55);
-    border: 1px dashed rgba(47,107,111,0.4);
-    border-radius: 4px;
-    padding: 0.9rem 1.1rem;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: #3d4e4e;
-  }
-  .mockup-flag strong { color: var(--teal-dark); }
 </style>
 </head>
 <body>
@@ -255,16 +241,6 @@
   <p class="page-footer" style="margin-top:0.6rem;">
     <a href="privacy.html">Privacy Policy</a>&nbsp;&middot;&nbsp;<a href="terms.html">Terms of Use</a>&nbsp;&middot;&nbsp;<a href="mailto:ask@linguadepth.com">ask@linguadepth.com</a>
   </p>
-</div>
-
-<div class="mockup-flag">
-  <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. This is Phase 1 item 2 (Free-Trial page), ported from PrecisionSteps' <code>free-trial.html</code> trial-entry screen &ndash; email capture plus the same 13+ age-gate confirmation (kept close to verbatim since it's compliance-facing language), reskinned to LinguaDepth's teal palette and Georgia + Arial fonts.<br/>
-  2. Scope of this file: the entry step only (email + age gate). PrecisionSteps' free-trial flow continues into a subject/settings screen, then loading, lesson, lesson-complete, and an upsell screen once the free lessons are used up &ndash; for LinguaDepth, the settings-equivalent screen already exists (the language-pair + CEFR + educational-level picker in <code>picker.html</code>), so this page hands off there rather than duplicating it.<br/>
-  3. Not yet wired: trial-mode chrome on the downstream pages (a "lessons remaining" counter, and an upsell screen once the cap is hit) &ndash; PrecisionSteps drives this with a <code>localStorage</code> lesson counter tied to its single free-text-subject engine. LinguaDepth's natural equivalent is the single-lesson path (Decision 8), which is Phase 1 item 6 and not yet built; wiring the trial counter into the picker/lesson pages is worth sequencing after that, not duplicated here ahead of it.<br/>
-  4. "5 Free Lessons" is carried over unchanged from PrecisionSteps' cap &ndash; not confirmed as the number Jamie wants for LinguaDepth.<br/>
-  5. No email storage or real submission logic wired, per Phase 1's no-backend scope &ndash; clicking "Begin Free Trial" (once the email is filled and the age box checked) navigates straight to the language-pair picker.<br/>
-  6. Privacy/Terms links point to LinguaDepth-named files that don't exist yet (Phase 1 item 8, still pending), same as the Access screen.
 </div>
 
 <script>
