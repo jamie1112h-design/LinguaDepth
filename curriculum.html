@@ -299,22 +299,43 @@
 </div>
 
 <script>
-  // Same code/name map as the index page's picker – kept in sync manually for
+  // Same code/name map as the picker page (picker_v1_0_5) – kept in sync manually for
   // now since these are two independent static files; once this becomes a
   // real app this belongs in one shared source, not copy-pasted per page.
   const LANGUAGES = {
     "en": "English",
+    "sq": "Albanian",
+    "ca": "Catalan",
+    "hr": "Croatian",
+    "cs": "Czech",
+    "da": "Danish",
+    "nl": "Dutch",
+    "et": "Estonian",
+    "fi": "Finnish",
     "fr-FR": "French (France)",
     "fr-QC": "French (Québécois)",
-    "es-ES": "Spanish (Spain)",
-    "es-MX": "Spanish (Latin America)",
-    "pt-PT": "Portuguese (Portugal)",
-    "pt-BR": "Portuguese (Brazilian)",
-    "it": "Italian",
+    "de": "German",
     "el": "Greek",
-    "moh": "Kanien'kéha (Mohawk)"
+    "hu": "Hungarian",
+    "is": "Icelandic",
+    "id": "Indonesian",
+    "it": "Italian",
+    "lv": "Latvian",
+    "lt": "Lithuanian",
+    "nb": "Norwegian (Bokmål)",
+    "nn": "Norwegian (Nynorsk)",
+    "pl": "Polish",
+    "pt-BR": "Portuguese (Brazilian)",
+    "pt-PT": "Portuguese (Portugal)",
+    "ro": "Romanian",
+    "sk": "Slovak",
+    "sl": "Slovene",
+    "es-MX": "Spanish (Latin America)",
+    "es-ES": "Spanish (Spain)",
+    "sv": "Swedish",
+    "tr": "Turkish",
+    "uk": "Ukrainian"
   };
-
   const params = new URLSearchParams(window.location.search);
   const targetCode = params.get("target");
   const courseLangName = document.getElementById("courseLangName");

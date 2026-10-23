@@ -358,6 +358,98 @@
     transition: all 0.15s;
   }
   .btn-secondary:hover { background: var(--teal-mist); }
+
+  /* ── AI-generated notice and Report a Problem (added v1.0.6 / v1.0.1) ── */
+  .ai-notice {
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: #4a5c5c;
+    margin-bottom: 1.1rem;
+  }
+  .report-row { text-align: center; margin-top: 1.4rem; }
+  .btn-report {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: var(--teal-dark);
+    background: transparent;
+    border: 1px solid rgba(47,107,111,0.4);
+    border-radius: 2px;
+    padding: 0.55rem 1.3rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-report:hover { background: var(--teal-mist); }
+  .report-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(22,53,56,0.45);
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .report-overlay.open { display: flex; }
+  .report-modal {
+    width: 100%;
+    max-width: 520px;
+    background: var(--parchment);
+    border: 1px solid rgba(47,107,111,0.35);
+    border-radius: 6px;
+    padding: 2rem 2.2rem;
+    box-shadow: 0 16px 48px rgba(22,53,56,0.3);
+    text-align: left;
+  }
+  .report-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+  .report-context {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: #4a5c5c;
+    margin-bottom: 1.3rem;
+  }
+  .report-label {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 0.5rem;
+  }
+  .report-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.2rem; }
+  .report-cat {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(47,107,111,0.35);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--teal-dark);
+    cursor: pointer;
+  }
+  .report-cat.active { background: var(--teal); border-color: var(--teal); color: var(--parchment); }
+  .report-note {
+    width: 100%;
+    min-height: 90px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 4px;
+    padding: 0.7rem 0.8rem;
+    margin-bottom: 1.4rem;
+    resize: vertical;
+  }
+  .report-actions { display: flex; gap: 0.8rem; justify-content: flex-end; }
+  .report-thanks { text-align: center; padding: 1rem 0; }
+  .report-thanks p { font-size: 1.1rem; color: var(--ink); margin-bottom: 1.4rem; }
 </style>
 </head>
 <body>
@@ -380,9 +472,11 @@
       <div class="badge-pill" id="badgeCefr">B1</div>
       <div class="badge-pill" id="badgeFrames">6 Frames</div>
     </div>
+    <p class="ai-notice" id="aiNotice">Lessons are AI-generated and may contain mistakes.</p>
     <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
     <div class="page-counter" id="pageCounter">Frame 1 of 6</div>
     <div class="card" id="card"><!-- rendered by script --></div>
+    <div class="report-row"><button class="btn-report" id="reportBtn" type="button">Report a Problem</button></div>
   </div>
 
   <div class="complete-wrap" id="completeState">
@@ -402,13 +496,87 @@
   <strong>Mockup notes for review, not shipped copy:</strong><br/>
   1. This is Lesson 1 of Module 1 ("Quick Hellos & Goodbyes") with two demo frames wired to cycle – a teaching frame and a question/answer frame – so the three-state loop (teach → question → answer) is visible and clickable, not just described. A real lesson would have as many frames as the frame-count setting.<br/>
   2. Vocalize icons are placed but not wired – clicking either one shows an alert naming what would be spoken and in what language, per your "sort out the wiring later" instruction.<br/>
-  3. Session badges (language / CEFR / frame count) are hardcoded here for the mockup. Once this page is reached from the curriculum flow, they should read from the same URL parameters the curriculum page already accepts.<br/>
+  3. The language and CEFR badges now read from the URL params the curriculum page forwards; opened directly with no params they fall back to French (Québécois) and B1. The frame-count badge stays at 6, which is Lesson 1's own frame count on the curriculum page, not the picker's lesson-length slider. The lesson content itself is still the same placeholder French (Québécois) demo whatever language is chosen, so the badge and the content will not match until real generation exists (Phase 3).<br/>
   4. Card content, options, and explanation text are placeholder French (Québécois) – not reviewed for linguistic accuracy.<br/>
   5. Phase 1 item 3 (loading state), added this pass: a spinner + "Composing your lesson…" shows for a fixed 1.5 seconds before the frame content appears, ported from PrecisionSteps' `loadingScreen` pattern (spinner markup and timing) and reskinned to the teal palette. This is a simulated delay only – in Phase 3, this becomes the real wait on the Supabase Edge Function call that generates the lesson, and the fixed timeout goes away entirely in favor of showing the spinner until that call actually resolves.<br/>
-  6. Phase 1 item 4 (lesson-complete screen), added this pass: replaces the old bare `alert()` with a designed state (completion message, progress line, and a "Next Lesson" vs. "Back to Curriculum" choice), ported from PrecisionSteps' `completeScreen` structure and reskinned. "Next Lesson" is a stub alert since Lesson 2 doesn't exist yet – only Lesson 1 has real content built. "Back to Curriculum" navigates for real, forwarding the current URL's query string so the curriculum page's title stays correct. Not in scope here: reflecting the completion on the curriculum page itself (Module 1 marked done, Module 2 unlocked) – that's Phase 1 item 5, not yet built, so returning to the curriculum still shows the same static locked/unlocked layout regardless of this completion.
+  6. Phase 1 item 4 (lesson-complete screen), added this pass: replaces the old bare `alert()` with a designed state (completion message, progress line, and a "Next Lesson" vs. "Back to Curriculum" choice), ported from PrecisionSteps' `completeScreen` structure and reskinned. "Next Lesson" is a stub alert since Lesson 2 doesn't exist yet – only Lesson 1 has real content built. "Back to Curriculum" navigates for real, forwarding the current URL's query string so the curriculum page's title stays correct. Not in scope here: reflecting the completion on the curriculum page itself (Module 1 marked done, Module 2 unlocked) – that's Phase 1 item 5, not yet built, so returning to the curriculum still shows the same static locked/unlocked layout regardless of this completion.<br/>
+  7. Added this pass: a one-line notice under the session badges ("Lessons are AI-generated and may contain mistakes.") and a Report a Problem button below the lesson card. The button opens a small form – pick what went wrong (Wrong Translation, Wrong Grammar, Wrong Spelling or Accent, Inappropriate Content, Something Else), add an optional note, send. It is display only for now: nothing is sent anywhere. In Phase 3 the report (frame, language, category, note) goes to a Supabase table through an Edge Function. The notice is hidden on the lesson-complete screen; the button stays.
+</div>
+
+<div class="report-overlay" id="reportOverlay" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+  <div class="report-modal">
+    <div id="reportForm">
+      <h2 class="report-title" id="reportTitle">Report a Problem</h2>
+      <p class="report-context" id="reportContext"></p>
+      <span class="report-label">What Went Wrong?</span>
+      <div class="report-cats" id="reportCats">
+        <button class="report-cat" type="button" data-cat="translation">Wrong Translation</button>
+        <button class="report-cat" type="button" data-cat="grammar">Wrong Grammar</button>
+        <button class="report-cat" type="button" data-cat="spelling">Wrong Spelling or Accent</button>
+        <button class="report-cat" type="button" data-cat="inappropriate">Inappropriate Content</button>
+        <button class="report-cat" type="button" data-cat="other">Something Else</button>
+      </div>
+      <label class="report-label" for="reportNote">Tell Us More (Optional)</label>
+      <textarea class="report-note" id="reportNote"></textarea>
+      <div class="report-actions">
+        <button class="btn-secondary" id="reportCancel" type="button">Cancel</button>
+        <button class="btn-primary" id="reportSend" type="button" disabled>Send Report</button>
+      </div>
+    </div>
+    <div class="report-thanks" id="reportThanks" style="display:none;">
+      <h2 class="report-title">Thank You</h2>
+      <p>Your report helps make LinguaDepth better.</p>
+      <button class="btn-primary" id="reportClose" type="button">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
+  const LANGUAGES = {
+    "en": "English",
+    "sq": "Albanian",
+    "ca": "Catalan",
+    "hr": "Croatian",
+    "cs": "Czech",
+    "da": "Danish",
+    "nl": "Dutch",
+    "et": "Estonian",
+    "fi": "Finnish",
+    "fr-FR": "French (France)",
+    "fr-QC": "French (Québécois)",
+    "de": "German",
+    "el": "Greek",
+    "hu": "Hungarian",
+    "is": "Icelandic",
+    "id": "Indonesian",
+    "it": "Italian",
+    "lv": "Latvian",
+    "lt": "Lithuanian",
+    "nb": "Norwegian (Bokmål)",
+    "nn": "Norwegian (Nynorsk)",
+    "pl": "Polish",
+    "pt-BR": "Portuguese (Brazilian)",
+    "pt-PT": "Portuguese (Portugal)",
+    "ro": "Romanian",
+    "sk": "Slovak",
+    "sl": "Slovene",
+    "es-MX": "Spanish (Latin America)",
+    "es-ES": "Spanish (Spain)",
+    "sv": "Swedish",
+    "tr": "Turkish",
+    "uk": "Ukrainian"
+  };
+
+  // Session badges read from the URL params the curriculum page forwards
+  // ("Start" button on curriculum.html). The frame-count badge stays at 6:
+  // that is Lesson 1's own frame count on the curriculum page, not the
+  // picker's lesson-length slider (which applies to the single-lesson path).
+  const lessonParams = new URLSearchParams(window.location.search);
+  const lessonTarget = lessonParams.get("target");
+  const lessonCefr = lessonParams.get("cefr");
+  if (lessonTarget) document.getElementById("badgeLang").textContent = LANGUAGES[lessonTarget] || lessonTarget;
+  if (lessonCefr) document.getElementById("badgeCefr").textContent = lessonCefr;
+
   const speakerIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12c0-1.77-1-3.29-2.5-4.03v8.06c1.5-.74 2.5-2.26 2.5-4.03z"/></svg>`;
 
   function vocalize(text, kind) {
@@ -503,6 +671,7 @@
     document.querySelector(".progress-bar").style.display = "none";
     document.querySelector(".page-counter").style.display = "none";
     document.querySelector(".session-badge").style.display = "none";
+    document.getElementById("aiNotice").style.display = "none";
     document.getElementById("completeState").style.display = "block";
   }
 
@@ -523,6 +692,46 @@
     params.set("completed", "module1");
     window.location.href = "curriculum.html?" + params.toString();
   });
+
+  // Report a Problem (mockup): opens a small form, lets the learner pick what
+  // went wrong, and shows a thank-you. Nothing is sent anywhere yet – in
+  // Phase 3 the Send button posts the report (frame, language, category,
+  // note) to a Supabase table through an Edge Function.
+  (function () {
+    const overlay = document.getElementById("reportOverlay");
+    const sendBtn = document.getElementById("reportSend");
+    let chosen = null;
+    function openReport() {
+      const lang = document.getElementById("badgeLang").textContent;
+      const cefr = document.getElementById("badgeCefr").textContent;
+      document.getElementById("reportContext").textContent =
+        `Frame ${currentFrame + 1} of ${frames.length} – ${lang}, ${cefr}`;
+      chosen = null;
+      document.querySelectorAll(".report-cat").forEach(b => b.classList.remove("active"));
+      document.getElementById("reportNote").value = "";
+      sendBtn.disabled = true;
+      document.getElementById("reportForm").style.display = "block";
+      document.getElementById("reportThanks").style.display = "none";
+      overlay.classList.add("open");
+    }
+    function closeReport() { overlay.classList.remove("open"); }
+    document.getElementById("reportBtn").addEventListener("click", openReport);
+    document.getElementById("reportCancel").addEventListener("click", closeReport);
+    document.getElementById("reportClose").addEventListener("click", closeReport);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeReport(); });
+    document.querySelectorAll(".report-cat").forEach(b => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".report-cat").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        chosen = b.dataset.cat;
+        sendBtn.disabled = false;
+      });
+    });
+    sendBtn.addEventListener("click", () => {
+      document.getElementById("reportForm").style.display = "none";
+      document.getElementById("reportThanks").style.display = "block";
+    });
+  })();
 
   // Loading state (Phase 1 item 3): simulate the delay of content being
   // generated. In Phase 3 this becomes the real await on the Supabase Edge

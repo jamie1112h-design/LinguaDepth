@@ -170,7 +170,7 @@
     top: calc(100% + 6px);
     left: 0;
     right: 0;
-    max-height: 260px;
+    max-height: 300px;
     overflow-y: auto;
     background: var(--parchment);
     border: 1px solid rgba(47,107,111,0.35);
@@ -195,16 +195,16 @@
   .picker-row.selected { background: var(--teal-mist); font-weight: 600; color: var(--teal-dark); }
 
   .picker-row .provisional-tag {
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
     color: var(--amber-flag);
     border: 1px solid var(--amber-flag);
     border-radius: 3px;
     padding: 0.1rem 0.35rem;
   }
 
-  /* ── Provisional-language caveat banner (Mohawk / low-resource tier) ── */
+  /* ── Provisional-language notice, shown when a provisional language is chosen ── */
   .caveat-banner {
     display: none;
     text-align: left;
@@ -223,6 +223,36 @@
     font-family: Georgia, 'Times New Roman', serif;
     font-weight: 600;
     letter-spacing: 0.02em;
+  }
+
+  /* ── "Under Development" list: shown below a demarcation line, not selectable ── */
+  .picker-divider {
+    border-top: 2px solid rgba(47,107,111,0.4);
+    margin-top: 0.2rem;
+    padding: 0.55rem 0.9rem 0.35rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    color: var(--amber-flag);
+    background: rgba(168,103,47,0.07);
+    cursor: default;
+  }
+  .picker-row.under-dev {
+    cursor: default;
+    color: #7a8a8a;
+    font-style: italic;
+    background: rgba(168,103,47,0.04);
+  }
+  .picker-row.under-dev:hover { background: rgba(168,103,47,0.04); }
+  .picker-row .under-dev-tag {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--amber-flag);
+    border: 1px solid var(--amber-flag);
+    border-radius: 3px;
+    padding: 0.1rem 0.35rem;
   }
 
   .option-group {
@@ -436,8 +466,8 @@
     </div>
   </div>
 
-  <div class="caveat-banner" id="mohawkCaveat">
-    <strong>Community-Reviewed – Provisional.</strong> Kanien'kéha (Mohawk) instruction is generated with far less linguistic certainty than the European languages above – vocabulary, grammar, and especially diacritics/tone marking will need spot-checking by a fluent speaker before this tier is presented with full confidence. Treated here as the outlier deployment for modelling difficult, threatened, and ancient languages generally.
+  <div class="caveat-banner" id="provisionalNotice">
+    <strong>Provisional.</strong> Lessons in this language are generated with less certainty than in the other languages on the list, and have not yet been reviewed by a native speaker. Vocabulary, grammar and accents may need checking.
   </div>
 
   <div class="option-group">
@@ -502,15 +532,14 @@
 
 <div class="mockup-flag">
   <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. Dialects are now merged into one flat list per your instruction – French (France) and French (Québécois) are two separate rows in the same picker, not a language-then-dialect two-step. Same for Spanish and Portuguese.<br/>
-  2. Portuguese's European/Brazilian split remains my proposed extension of the pattern you set with French/Spanish, not something you stated explicitly – confirm or drop.<br/>
-  3. Italian and Greek are shown as single rows for now.<br/>
-  4. This is the custom-picker version you asked to see first (button + dropdown panel of rows). A plain native &lt;select&gt; dropdown is the other option on the table – say the word and I'll build that variant alongside this one for comparison.<br/>
-  5. Fonts corrected to the platform-wide Georgia + Arial pairing (Sitrep v1.35/v1.36, 2026-08-16) – Playfair Display and Crimson Pro were a carryover from PrecisionSteps that shouldn't have applied to new LinguaDepth development.<br/>
-  6. Your Educational Level and Language Learning Level are now two genuinely distinct axes – audience/explanation style vs. actual target-language ability – rather than the overlapping Learning Level/Proficiency Tier pair from the last pass.<br/>
-  7. Click the "I want to learn" picker and choose Kanien'kéha (Mohawk) to see the caveat banner and its provisional tag in the list.<br/>
-  8. "Begin the Lesson" renamed to "Begin With a Single Lesson" so it reads as a parallel choice against the new "Begin With a Pre-Built Curriculum" button – your suggested "Begin Your Single Lesson" works too if you'd rather keep it; I picked the "With a" phrasing for symmetry between the two options, not because the other was wrong.<br/>
-  9. Updated this pass: "Begin With a Single Lesson" now navigates for real to `single-lesson.html` (Phase 1 item 6, Decision 36), carrying the same live selections (language pair, CEFR, educational level, frame count) as URL params that "Begin With a Pre-Built Curriculum" already sent to the curriculum page. Both buttons now genuinely work.
+  1. Language list expanded with the eleven approved additions (Catalan, Czech, Danish, Dutch, German, Indonesian, Norwegian, Polish, Romanian, Swedish and Turkish) plus Hungarian and Ukrainian, then nine NATO-country languages (Albanian, Croatian, Estonian, Finnish, Icelandic, Latvian, Lithuanian, Slovak, Slovene). Norwegian is two rows, Bokmål and Nynorsk, as you asked. After English at the top, the rows are in alphabetical order so the longer list is easy to scan – say so if you would rather keep the earlier grouping.<br/>
+  2. Portuguese keeps its European/Brazilian split (approved). French and Spanish keep their two rows each; Italian and Greek stay single rows.<br/>
+  3. Kanien'kéha (Mohawk) is removed from the picker entirely, per your instruction. The Under Development section is kept in the code but stays hidden while it is empty. The earlier row and its banner are preserved in picker_v1_0_1.html.<br/>
+
+  4. Albanian, Estonian, Icelandic, Latvian and Lithuanian carry a Provisional tag in the list, per your instruction, and selecting one shows a short notice. The notice wording is mine, not yet approved – note it says "not yet reviewed by a native speaker" because the Community-Reviewed label used for Kanien'kéha would not be accurate here. Not added yet, awaiting your approval: Russian, Vietnamese, Swahili, Bulgarian, Macedonian, Serbian and Montenegrin, Luxembourgish, and the Arabic dialects.<br/>
+  5. This is still the custom-picker version. A plain native &lt;select&gt; dropdown is the other option on the table – say the word and I will build that variant for comparison.<br/>
+  6. Fonts are the platform-wide Georgia + Arial pairing. Your Educational Level and Language Learning Level remain two distinct axes.<br/>
+  7. "Begin With a Single Lesson" and "Begin With a Pre-Built Curriculum" both navigate for real, carrying the live selections as URL params, unchanged from the previous version.
 </div>
 
 <script>
@@ -518,16 +547,42 @@
   // not a separate nested step, per instruction.
   const LANGUAGES = [
     { code: "en",    name: "English" },
+    { code: "sq",    name: "Albanian", provisional: true },
+    { code: "ca",    name: "Catalan" },
+    { code: "hr",    name: "Croatian" },
+    { code: "cs",    name: "Czech" },
+    { code: "da",    name: "Danish" },
+    { code: "nl",    name: "Dutch" },
+    { code: "et",    name: "Estonian", provisional: true },
+    { code: "fi",    name: "Finnish" },
     { code: "fr-FR", name: "French (France)" },
     { code: "fr-QC", name: "French (Québécois)" },
-    { code: "es-ES", name: "Spanish (Spain)" },
-    { code: "es-MX", name: "Spanish (Latin America)" },
-    { code: "pt-PT", name: "Portuguese (Portugal)" },
-    { code: "pt-BR", name: "Portuguese (Brazilian)" },
-    { code: "it",    name: "Italian" },
+    { code: "de",    name: "German" },
     { code: "el",    name: "Greek" },
-    { code: "moh",   name: "Kanien'kéha (Mohawk)", provisional: true }
+    { code: "hu",    name: "Hungarian" },
+    { code: "is",    name: "Icelandic", provisional: true },
+    { code: "id",    name: "Indonesian" },
+    { code: "it",    name: "Italian" },
+    { code: "lv",    name: "Latvian", provisional: true },
+    { code: "lt",    name: "Lithuanian", provisional: true },
+    { code: "nb",    name: "Norwegian (Bokmål)" },
+    { code: "nn",    name: "Norwegian (Nynorsk)" },
+    { code: "pl",    name: "Polish" },
+    { code: "pt-BR", name: "Portuguese (Brazilian)" },
+    { code: "pt-PT", name: "Portuguese (Portugal)" },
+    { code: "ro",    name: "Romanian" },
+    { code: "sk",    name: "Slovak" },
+    { code: "sl",    name: "Slovene" },
+    { code: "es-MX", name: "Spanish (Latin America)" },
+    { code: "es-ES", name: "Spanish (Spain)" },
+    { code: "sv",    name: "Swedish" },
+    { code: "tr",    name: "Turkish" },
+    { code: "uk",    name: "Ukrainian" }
   ];
+
+  // Languages shown below a demarcation line, visible but not selectable yet.
+  // Currently empty: the section stays hidden until a language is added here.
+  const UNDER_DEVELOPMENT = [];
 
   let sourceValue = "en";
   let targetValue = "fr-QC";
@@ -544,9 +599,26 @@
         textEl.textContent = l.name;
         panelEl.classList.remove("open");
         btnEl.setAttribute("aria-expanded", "false");
-        handleMohawkCaveat();
+        handleProvisionalNotice();
         updateSummary();
       });
+      panelEl.appendChild(row);
+    });
+
+    if (UNDER_DEVELOPMENT.length > 0) {
+      const divider = document.createElement("div");
+      divider.className = "picker-divider";
+      divider.textContent = "Under Development";
+      panelEl.appendChild(divider);
+    }
+
+    UNDER_DEVELOPMENT.forEach(l => {
+      const row = document.createElement("div");
+      row.className = "picker-row under-dev";
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-disabled", "true");
+      row.innerHTML = `<span>${l.name}</span><span class="under-dev-tag">Coming Later</span>`;
+      row.addEventListener("click", (e) => e.stopPropagation()); // not selectable; keep panel open
       panelEl.appendChild(row);
     });
   }
@@ -577,15 +649,13 @@
     document.querySelectorAll(".picker-btn").forEach(b => b.setAttribute("aria-expanded", "false"));
   });
 
-  function handleMohawkCaveat() {
-    const banner = document.getElementById("mohawkCaveat");
-    if (targetValue === "moh" || sourceValue === "moh") {
-      banner.classList.add("active");
-    } else {
-      banner.classList.remove("active");
-    }
+  function handleProvisionalNotice() {
+    const isProv = (code) => !!(LANGUAGES.find(l => l.code === code) || {}).provisional;
+    const banner = document.getElementById("provisionalNotice");
+    if (isProv(targetValue) || isProv(sourceValue)) { banner.classList.add("active"); }
+    else { banner.classList.remove("active"); }
   }
-  handleMohawkCaveat();
+  handleProvisionalNotice();
 
   const frameSlider = document.getElementById("frameSlider");
   const frameCountDisplay = document.getElementById("frameCountDisplay");
