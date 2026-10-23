@@ -510,6 +510,7 @@
       <div class="complete-btn-row">
         <button class="btn-primary" id="tryAnotherBtn" style="width:auto;">Try Another Lesson &nbsp;&rarr;</button>
         <button class="btn-secondary" id="changeSettingsBtn">Change Settings &nbsp;&rarr;</button>
+        <button class="btn-secondary" id="homeBtn">Back to Home &nbsp;&rarr;</button>
       </div>
     </div>
   </div>
@@ -524,17 +525,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<div class="mockup-flag">
-  <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. This is Phase 1 item 6 (single-lesson path's own screens), built as its own file per Decision 8 – not a stripped-down copy of `lesson.html`. This path skips the curriculum entirely: it launches straight from the picker's settings (Decision 36), has no progress persistence, and its completion screen offers "Try Another Lesson" / "Change Settings" rather than any curriculum reference.<br/>
-  2. Session badges (language / CEFR / frame count) read from real URL params passed by `picker.html`'s "Begin With a Single Lesson" button – unlike `lesson.html`'s curriculum-path badges, which are still hardcoded (a pre-existing, separately flagged gap on that file).<br/>
-  3. Lessons are now generated for real by the `generate-lesson` Supabase function, in the language pair, level and frame count chosen on the picker. This path currently works through the free trial only (the email entered on the free-trial page); access-code and subscriber checks arrive with Stage D.<br/>
-  4. Vocalize icons are not shown: audio is after launch.<br/>
-  5. While a lesson is generated, the spinner shows; if it fails, an error screen offers Try Again. When the function itself fails, the free lesson is given back.<br/>
-  6. "Try Another Lesson" prepares a new lesson with the same settings and counts as one more free lesson. "Change Settings" returns to `picker.html` fresh (doesn't pre-fill your prior picks – a possible future refinement, not built here).<br/>
-  7. Added this pass: the same one-line AI-generated notice and Report a Problem button as `lesson.html` (see that file's note 7). Also updated the language-name list at the top of the script to match the current picker (picker_v1_0_5), so the language badge shows names such as Norwegian (Nynorsk) instead of raw codes; Kanien'kéha is removed from that list because it is no longer in the picker.
 </div>
 
 <div class="report-overlay" id="reportOverlay" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
@@ -734,6 +724,10 @@
     // No progress tracking on this path (Decision 8) – "another" reloads with
     // the same settings, which prepares a brand-new lesson (one more trial lesson).
     window.location.href = "single-lesson.html" + window.location.search;
+  });
+
+  document.getElementById("homeBtn").addEventListener("click", () => {
+    window.location.href = "index.html";
   });
 
   document.getElementById("changeSettingsBtn").addEventListener("click", () => {
