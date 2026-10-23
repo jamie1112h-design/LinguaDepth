@@ -532,11 +532,12 @@
 
 <div class="mockup-flag">
   <strong>Mockup notes for review, not shipped copy:</strong><br/>
-  1. Language list expanded with the eleven approved additions (Catalan, Czech, Danish, Dutch, German, Indonesian, Norwegian, Polish, Romanian, Swedish and Turkish) plus Hungarian and Ukrainian, then nine NATO-country languages (Albanian, Croatian, Estonian, Finnish, Icelandic, Latvian, Lithuanian, Slovak, Slovene). Norwegian is two rows, Bokmål and Nynorsk, as you asked. After English at the top, the rows are in alphabetical order so the longer list is easy to scan – say so if you would rather keep the earlier grouping.<br/>
+  1. Language list expanded with the eleven approved additions (Catalan, Czech, Danish, Dutch, German, Indonesian, Norwegian, Polish, Romanian, Swedish and Turkish) plus Hungarian and Ukrainian, then four NATO-country languages (Croatian, Finnish, Slovak, Slovene). Norwegian is two rows, Bokmål and Nynorsk, as you asked. After English at the top, the rows are in alphabetical order so the longer list is easy to scan – say so if you would rather keep the earlier grouping.<br/>
   2. Portuguese keeps its European/Brazilian split (approved). French and Spanish keep their two rows each; Italian and Greek stay single rows.<br/>
   3. Kanien'kéha (Mohawk) is removed from the picker entirely, per your instruction. The Under Development section is kept in the code but stays hidden while it is empty. The earlier row and its banner are preserved in picker_v1_0_1.html.<br/>
 
-  4. Albanian, Estonian, Icelandic, Latvian and Lithuanian carry a Provisional tag in the list, per your instruction, and selecting one shows a short notice. The notice wording is mine, not yet approved – note it says "not yet reviewed by a native speaker" because the Community-Reviewed label used for Kanien'kéha would not be accurate here. Not added yet, awaiting your approval: Russian, Vietnamese, Swahili, Bulgarian, Macedonian, Serbian and Montenegrin, Luxembourgish, and the Arabic dialects.<br/>
+  4. Albanian, Estonian, Icelandic, Latvian and Lithuanian are held back from the picker for now, per your instruction not to list provisional languages. The Provisional tag and notice are still in the code and appear only if a language is flagged provisional, so they can be brought back by adding those rows. Not added yet, awaiting your approval: Russian, Vietnamese, Swahili, Bulgarian, Macedonian, Serbian and Montenegrin, Luxembourgish, and the Arabic dialects.<br/>
+
   5. This is still the custom-picker version. A plain native &lt;select&gt; dropdown is the other option on the table – say the word and I will build that variant for comparison.<br/>
   6. Fonts are the platform-wide Georgia + Arial pairing. Your Educational Level and Language Learning Level remain two distinct axes.<br/>
   7. "Begin With a Single Lesson" and "Begin With a Pre-Built Curriculum" both navigate for real, carrying the live selections as URL params, unchanged from the previous version.
@@ -547,24 +548,19 @@
   // not a separate nested step, per instruction.
   const LANGUAGES = [
     { code: "en",    name: "English" },
-    { code: "sq",    name: "Albanian", provisional: true },
     { code: "ca",    name: "Catalan" },
     { code: "hr",    name: "Croatian" },
     { code: "cs",    name: "Czech" },
     { code: "da",    name: "Danish" },
     { code: "nl",    name: "Dutch" },
-    { code: "et",    name: "Estonian", provisional: true },
     { code: "fi",    name: "Finnish" },
     { code: "fr-FR", name: "French (France)" },
     { code: "fr-QC", name: "French (Québécois)" },
     { code: "de",    name: "German" },
     { code: "el",    name: "Greek" },
     { code: "hu",    name: "Hungarian" },
-    { code: "is",    name: "Icelandic", provisional: true },
     { code: "id",    name: "Indonesian" },
     { code: "it",    name: "Italian" },
-    { code: "lv",    name: "Latvian", provisional: true },
-    { code: "lt",    name: "Lithuanian", provisional: true },
     { code: "nb",    name: "Norwegian (Bokmål)" },
     { code: "nn",    name: "Norwegian (Nynorsk)" },
     { code: "pl",    name: "Polish" },
