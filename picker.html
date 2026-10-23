@@ -361,6 +361,22 @@
   .cefr-body strong { font-size: 0.95rem; color: var(--ink); }
   .cefr-body span { font-size: 0.85rem; color: #4a5c5c; line-height: 1.4; }
 
+  .info-card {
+    margin-top: 2.2rem;
+    padding: 1.4rem 1.6rem;
+    border: 1px solid rgba(47,107,111,0.3);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.5);
+  }
+  .info-card-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--teal-dark);
+    margin-bottom: 0.6rem;
+  }
+  .info-card p { font-size: 0.98rem; line-height: 1.65; color: var(--ink); }
+
   .settings-summary {
     font-size: 0.92rem;
     font-style: italic;
@@ -506,7 +522,6 @@
         <div class="cefr-body"><strong>Near-mastery</strong><span>Highly nuanced, specialised, literary, and fast natural language</span></div>
       </div>
     </div>
-    <p class="tier-note">CEFR levels describe practical can-do ability across reading, listening, speaking, and writing – not a count of memorised words or rules. This is <strong>self-assessed</strong>: ask yourself "Can I introduce myself and ask basic questions?" (likely A1), "Can I handle familiar situations without much help?" (likely B1), or "Can I discuss complex subjects and understand demanding texts?" (likely B2–C1). It isn't a formal placement test. If your skills are uneven – say, stronger reading than speaking – pick the level matching your weaker skill, unless a future version lets you set levels per skill.</p>
   </div>
 
   <p class="settings-summary" id="settingsSummary">10-frame · B1 lesson</p>
@@ -514,6 +529,10 @@
   <button class="btn-primary" id="startBtn">Begin With a Single Lesson &nbsp;&rarr;</button>
   <p class="or-divider">Or You May</p>
   <button class="btn-primary" id="curriculumBtn">Begin With a Pre-Built Curriculum &nbsp;&rarr;</button>
+  <div class="info-card">
+    <h2 class="info-card-title">About Language Learning Levels</h2>
+    <p>CEFR levels describe practical can-do ability across reading, listening, speaking, and writing – not a count of memorised words or rules. This is <strong>self-assessed</strong>: ask yourself "Can I introduce myself and ask basic questions?" (likely A1), "Can I handle familiar situations without much help?" (likely B1), or "Can I discuss complex subjects and understand demanding texts?" (likely B2–C1). It isn't a formal placement test. If your skills are uneven – say, stronger reading than speaking – pick the level matching your weaker skill, unless a future version lets you set levels per skill.</p>
+  </div>
   <a href="#" class="sign-out-link">Manage Subscription</a>
   <a href="#" class="sign-out-link">Sign Out</a>
 </div>

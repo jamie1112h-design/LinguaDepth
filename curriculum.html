@@ -207,18 +207,23 @@
     color: #7a8a8a;
   }
 
-  .back-link {
+  .btn-secondary {
     display: block;
-    text-align: center;
-    margin-top: 2.2rem;
-    font-size: 0.85rem;
-    color: var(--teal-dark);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(47,107,111,0.3);
     width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 2.2rem auto 0;
+    padding: 0.85rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    background: transparent;
+    border: 1px solid rgba(47,107,111,0.5);
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
   }
+  .btn-secondary:hover { background: var(--teal-mist); }
 
 </style>
 </head>
@@ -275,7 +280,7 @@
 
   </div>
 
-  <a href="#" class="back-link">&larr; Change Language</a>
+  <a href="picker.html" class="btn-secondary">&larr; Change Language</a>
 </div>
 
 <script>
