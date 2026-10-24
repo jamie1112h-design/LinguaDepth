@@ -1,4 +1,4 @@
-// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.0.3
+// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.0.4
 // Repo path: supabase/functions/generate-lesson/index.ts  (local copy carries the version suffix)
 // Deploy with JWT verification OFF (the browser calls it directly; access is gated here instead).
 //
@@ -15,6 +15,7 @@
 //   6. Access codes: TRIAL-FREE uses the email-based free trial (3 lessons). Any other code is looked up
 //      in ld_access_codes (status active, not expired); subscribers have no lesson cap and their
 //      progress is kept under the code. Repeated wrong codes from one address are slowed down.
+//   7. Action "report": saves a Report a Problem submission to ld_reports (5 a minute per address).
 //
 // Secrets used:  ANTHROPIC_API_KEY (required)
 // Optional:      ANTHROPIC_MODEL, ALLOWED_ORIGINS (comma separated), TRIAL_LIMIT
@@ -236,9 +237,30 @@ Deno.serve(async (req: Request) => {
   const action = str(p.action, 12);
 
   // ── Progress actions (no lesson is generated or claimed) ─────────────────────
-  if (action === "progress" || action === "complete") {
+  if (action === "progress" || action === "complete" || action === "report") {
     if (rateLimited(`aux:${ip}`, 40, 60 * 1000)) return fail(429, "Too many requests. Please try again later.");
     try {
+      if (action === "report") {
+        if (rateLimited(`rep:${ip}`, 5, 60 * 1000)) return fail(429, "Too many reports. Please try again in a moment.");
+        const cat = str(p.category, 20);
+        if (!["translation", "grammar", "spelling", "inappropriate", "other"].includes(cat)) {
+          return fail(400, "Please choose what went wrong.");
+        }
+        const num = (v: unknown) => { const n = parseInt(String(v), 10); return n >= 0 && n <= 1000 ? n : null; };
+        const pathName = str(p.path, 12);
+        const rep = await fetch(`${SB_URL}/rest/v1/ld_reports`, {
+          method: "POST",
+          headers: { ...sb, "Prefer": "return=minimal" },
+          body: JSON.stringify({
+            learner_key: learner, source_lang: source, target_lang: target, cefr,
+            path: pathName === "single" || pathName === "curriculum" ? pathName : null,
+            lesson_no: num(p.lessonNo), variant: num(p.variant), frame_no: num(p.frameNo),
+            category: cat, note: str(p.note, 1000) || null, frame_text: str(p.frameText, 600) || null,
+          }),
+        });
+        if (!rep.ok) throw new Error("report write failed " + rep.status);
+        return reply(200, { ok: true });
+      }
       if (action === "progress") {
         const r = await fetch(
           `${SB_URL}/rest/v1/ld_progress?learner_key=eq.${enc(learner)}&target=eq.${enc(target)}&cefr=eq.${enc(cefr)}&select=lesson_no,variant,completed_at&order=completed_at.asc`,
