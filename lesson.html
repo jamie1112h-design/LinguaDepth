@@ -800,9 +800,35 @@
         sendBtn.disabled = false;
       });
     });
-    sendBtn.addEventListener("click", () => {
-      document.getElementById("reportForm").style.display = "none";
-      document.getElementById("reportThanks").style.display = "block";
+    function plain(h) { return String(h || "").replace(/<[^>]+>/g, ""); }
+    function frameText(fr) {
+      if (fr.type === "question") return plain(fr.question) + " | " + (fr.options || []).map(plain).join(" / ");
+      return plain(fr.lesson) + " | " + plain(fr.example) + " | " + plain(fr.translation);
+    }
+    sendBtn.addEventListener("click", async () => {
+      sendBtn.disabled = true;
+      const fr = frames[currentFrame] || {};
+      try {
+        const res = await fetch(FUNCTION_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(credentials() || {}),
+            source: slSource, target: slTarget, cefr: slCefr,
+            action: "report", category: chosen,
+            note: document.getElementById("reportNote").value,
+            path: "curriculum",
+            lessonNo: slLessonNo, variant: lessonVariant,
+            frameNo: fr.n || null, frameText: frameText(fr)
+          })
+        });
+        if (!res.ok) throw new Error("report failed");
+        document.getElementById("reportForm").style.display = "none";
+        document.getElementById("reportThanks").style.display = "block";
+      } catch (e) {
+        document.getElementById("reportContext").textContent = "Your report could not be sent. Please try again.";
+        sendBtn.disabled = false;
+      }
     });
   })();
 
