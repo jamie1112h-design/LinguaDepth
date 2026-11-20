@@ -1,5 +1,7 @@
-// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.1.1
-// v1.1.1 (2026-11-20): comment-only change (re-presented for the repo). The code is identical to the deployed v1.1.0 (Supabase version 8).
+// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.2.0
+// v1.2.0 (2026-11-20): every frame now carries an "Approximate Pronunciation" of its example sentence, written with the
+// learner's own language's letters (syllables hyphenated, stress in capitals). A missing pronunciation never fails a lesson.
+// v1.1.1 (2026-11-20): comment-only change (re-presented for the repo). The code was identical to v1.1.0.
 // Repo path: supabase/functions/generate-lesson/index.ts  (local copy carries the version suffix)
 // Deploy with JWT verification OFF (the browser calls it directly; access is gated here instead).
 //
@@ -166,6 +168,7 @@ For each frame:
 - "lesson": 2-3 short sentences written in ${s.name}, explaining the point. Put each ${t.name} word or phrase being taught in **double asterisks**.
 - "example": one natural example sentence in ${t.name} (no translation in this field).
 - "translation": the example translated into ${s.name}.
+- "pronunciation": an approximate pronunciation of the example sentence, written so that a reader of ${s.name} can sound it out using ${s.name} letters and spelling. Separate syllables with hyphens and put the stressed syllable in CAPITAL letters. It is only a rough guide: keep it simple and do not use IPA or special symbols.
 - "question": one question written in ${s.name} that tests the point.
 - "options": exactly 4 answer options. Make the three wrong options plausible, not silly.
 - "correct_index": always 0 (the order is shuffled afterwards).
@@ -178,7 +181,7 @@ Rules:
 - Return ONLY a valid JSON array, with no preamble and no markdown fences.
 
 Format:
-[{"frame":1,"is_review":false,"lesson":"...","example":"...","translation":"...","question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}]`;
+[{"frame":1,"is_review":false,"lesson":"...","example":"...","pronunciation":"...","translation":"...","question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}]`;
 }
 
 Deno.serve(async (req: Request) => {
@@ -359,7 +362,7 @@ Deno.serve(async (req: Request) => {
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: Math.min(1200 + count * 650, 16000),
+        max_tokens: Math.min(1200 + count * 780, 16000),
         messages: [{ role: "user", content: buildPrompt(target, source, cefr, edu, count, purpose, cur || undefined) }],
       }),
     });
@@ -384,6 +387,7 @@ Deno.serve(async (req: Request) => {
         is_review: f.is_review === true,
         lesson: clean(f.lesson),
         example: clean(f.example, 400),
+        pronunciation: clean(f.pronunciation, 400),
         translation: clean(f.translation, 400),
         question: clean(f.question, 500),
         options: opts,
