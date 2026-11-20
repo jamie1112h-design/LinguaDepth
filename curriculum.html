@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LinguaDepth – Your Course</title>
+<!-- curriculum v1_2_0 (Decision 53.10): on arrival the free-lesson count is read from the lesson service (action "status", nothing spent) when this tab does not already know it. v1_1_1 follows. -->
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -464,8 +465,19 @@
   }
   (async () => {
     const email = await sessionEmail();
-    const left = email ? trialRead(email) : null;
-    if (left === null || startBtn.style.display === "none") return;
+    if (!email || startBtn.style.display === "none") return;
+    let left = trialRead(email);
+    if (left === null) {
+      // Not known in this tab yet: ask the lesson service (read-only; nothing is spent). A subscriber sees no count.
+      try {
+        const headers = await authHeaders();
+        if (!headers.Authorization) return;
+        const r = await fetch(FUNCTION_URL, { method: "POST", headers, body: JSON.stringify({ action: "status" }) });
+        const d = await r.json();
+        if (d && typeof d.triesLeft === "number") { left = d.triesLeft; trialWrite(email, left); }
+      } catch (e) { /* the count is a nicety; the lesson service still decides */ }
+    }
+    if (left === null) return;
     showTrialStatus(left);
     if (left === 0) { window.ldExhausted = true; startBtn.innerHTML = "See Subscriber Plans &nbsp;&rarr;"; }
   })();
