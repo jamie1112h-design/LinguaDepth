@@ -1,4 +1,6 @@
-// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.2.0
+// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.3.0
+// v1.3.0 (2026-11-20): new read-only action "status" (Decision 53.10): returns { triesLeft } or { subscriber: true } so a page can show the
+// free-lesson count on arrival. It asks accounts-grh service-check "status" (nothing counted, nothing spent). Everything else is as v1.2.0.
 // v1.2.0 (2026-11-20): every frame now carries an "Approximate Pronunciation" of its example sentence, written with the
 // learner's own language's letters (syllables hyphenated, stress in capitals). A missing pronunciation never fails a lesson.
 // v1.1.1 (2026-11-20): comment-only change (re-presented for the repo). The code was identical to v1.1.0.
@@ -33,7 +35,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // -- QUVIVE BRIDGE (accounts-grh service-check) ----------------------------
 const SERVICE_ID = "linguadepth";
 
-async function callServiceCheck(action: "check" | "spend", email: string): Promise<{ status: number; body: any }> {
+async function callServiceCheck(action: "check" | "spend" | "status", email: string): Promise<{ status: number; body: any }> {
   const base = Deno.env.get("ACCOUNTS_URL");
   const secret = Deno.env.get("BRIDGE_SECRET");
   if (!base || !secret) return { status: 500, body: { allowed: false, reason: "not_configured" } };
@@ -233,6 +235,14 @@ Deno.serve(async (req: Request) => {
   if (!user || !user.email || !user.email_confirmed_at) return fail(401, "Please sign in to continue.");
   const email = user.email.trim().toLowerCase();
   const learner = `user:${email}`;
+
+  // Status (v1.3.0): the learner's free-lesson count on arrival. Read-only; asks accounts-grh, spends nothing.
+  if (str(p.action, 12) === "status") {
+    if (rateLimited(`status:${ip}`, 30, 60 * 1000)) return fail(429, "Too many requests. Please try again later.");
+    const st = await callServiceCheck("status", email);
+    if (st.status !== 200 || !st.body?.access) return fail(502, "Could not process your request. Please try again.");
+    return reply(200, st.body.access === "subscribed" ? { subscriber: true } : { triesLeft: Math.max(0, Number(st.body.tries_left) || 0) });
+  }
 
   if (!LANGS[target] || target === "en" && source === "en") return fail(400, "Please choose a language to learn.");
   if (!LANGS[source]) return fail(400, "Please choose your own language.");
