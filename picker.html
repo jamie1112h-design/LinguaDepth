@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LinguaDepth – Which language would you like to learn?</title>
+<!-- picker v1_2_0 (Decision 53.10): on arrival the free-lesson count is read from the lesson service (action "status", nothing spent) when this tab does not already know it. v1_1_1 follows. -->
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -710,6 +711,7 @@
   const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
   // Free-lesson count, shared between pages for this tab only. Valid for 15 minutes, then the server is the authority again.
   const PLANS_URL = "https://quvive.com/plans.html";
+  const FUNCTION_URL = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
   const TRIAL_KEY = "ld_trial";
   function trialRead(email) {
     try {
@@ -750,13 +752,25 @@
   sb.auth.getSession().then(({ data }) => {
     if (!data || !data.session) { window.location.replace("index.html"); return; }
     const email = data.session.user && data.session.user.email ? data.session.user.email.toLowerCase() : null;
-    const left = email ? trialRead(email) : null;
-    if (showTrialStatus(left) && left === 0) {
-      window.ldExhausted = true;
-      document.getElementById("startBtn").innerHTML = "See Subscriber Plans &nbsp;&rarr;";
-      document.getElementById("curriculumBtn").style.display = "none";
-      const od = document.querySelector(".or-divider"); if (od) od.style.display = "none";
-    }
+    const applyLeft = (left) => {
+      if (showTrialStatus(left) && left === 0) {
+        window.ldExhausted = true;
+        document.getElementById("startBtn").innerHTML = "See Subscriber Plans &nbsp;&rarr;";
+        document.getElementById("curriculumBtn").style.display = "none";
+        const od = document.querySelector(".or-divider"); if (od) od.style.display = "none";
+      }
+    };
+    const known = email ? trialRead(email) : null;
+    if (known !== null) { applyLeft(known); return; }
+    if (!email) return;
+    // Not known in this tab yet: ask the lesson service (read-only; nothing is spent). A subscriber sees no count.
+    fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + data.session.access_token },
+      body: JSON.stringify({ action: "status" })
+    }).then(r => r.json()).then(d => {
+      if (d && typeof d.triesLeft === "number") { trialWrite(email, d.triesLeft); applyLeft(d.triesLeft); }
+    }).catch(() => { /* the count is a nicety; the lesson service still decides */ });
   });
   document.getElementById("signOutLink").addEventListener("click", async (e) => {
     e.preventDefault();
