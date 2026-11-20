@@ -163,7 +163,6 @@
     border-radius: 0 4px 4px 0;
     padding: 0.85rem 1.1rem;
     margin-top: 0.8rem;
-    font-style: italic;
     color: var(--teal-deep);
   }
   .vocalize-sentence {
@@ -232,7 +231,7 @@
     color: var(--teal-dark);
     margin-bottom: 0.4rem;
   }
-  .answer-text { font-size: 1rem; font-style: italic; color: var(--ink); line-height: 1.6; }
+  .answer-text { font-size: 1rem; color: var(--ink); line-height: 1.6; }
 
   .btn-row { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: auto; }
 
@@ -287,9 +286,22 @@
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 1.1rem; color: #4a5c5c; line-height: 1.6; margin-bottom: 1.8rem;
   }
+  .pron-line {
+    margin-top: 0.7rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--teal-deep);
+  }
+  .pron-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 0.2rem;
+  }
+  .pron-text { font-size: 1.2rem; line-height: 1.5; }
   .example-translation {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 0.95rem; color: #4a5c5c; margin-top: 0.5rem; font-style: italic;
+    font-size: 0.95rem; color: #4a5c5c; margin-top: 0.5rem;
   }
 
   /* ── Loading state (Phase 1 item 3): shown while lesson content is
@@ -670,13 +682,13 @@
     return list;
   }
 
-  // The function turns **bold** into <strong>; a model sometimes also writes *italic*.
-  function italics(t) { return String(t).replace(/\*([^*<>]+?)\*/g, "<em>$1</em>"); }
+  // The model sometimes writes *word*; lessons never use italics, so the asterisks are dropped.
+  function noStars(t) { return String(t == null ? "" : t).replace(/\*([^*<>]+?)\*/g, "$1"); }
   function expandCards(list) {
     const cards = [];
     list.forEach((f, i) => {
-      cards.push({ type: "teach", n: i + 1, lesson: italics(f.lesson), example: f.example, translation: f.translation, is_review: f.is_review });
-      cards.push({ type: "question", n: i + 1, question: f.question, options: f.options, correctIndex: f.correct_index, explanation: italics(f.explanation), is_review: f.is_review });
+      cards.push({ type: "teach", n: i + 1, lesson: noStars(f.lesson), example: noStars(f.example), pronunciation: noStars(f.pronunciation), translation: noStars(f.translation), is_review: f.is_review });
+      cards.push({ type: "question", n: i + 1, question: f.question, options: f.options, correctIndex: f.correct_index, explanation: noStars(f.explanation), is_review: f.is_review });
     });
     return cards;
   }
@@ -698,6 +710,7 @@
           <div class="frame-type">Teach</div>
           <p class="lesson-text">${frame.lesson}</p>
           <div class="example-line"><span>${frame.example}</span></div>
+          ${frame.pronunciation ? `<div class="pron-line"><span class="pron-label">Approximate Pronunciation</span><span class="pron-text">${frame.pronunciation}</span></div>` : ""}
           <p class="example-translation">${frame.translation}</p>
         </div>
         <div class="btn-row"><button class="btn-primary" id="actionBtn">Continue &nbsp;&rarr;</button></div>
@@ -823,7 +836,7 @@
     function plain(h) { return String(h || "").replace(/<[^>]+>/g, ""); }
     function frameText(fr) {
       if (fr.type === "question") return plain(fr.question) + " | " + (fr.options || []).map(plain).join(" / ");
-      return plain(fr.lesson) + " | " + plain(fr.example) + " | " + plain(fr.translation);
+      return plain(fr.lesson) + " | " + plain(fr.example) + (fr.pronunciation ? " | " + plain(fr.pronunciation) : "") + " | " + plain(fr.translation);
     }
     sendBtn.addEventListener("click", async () => {
       sendBtn.disabled = true;
