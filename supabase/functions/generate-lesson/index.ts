@@ -1,29 +1,63 @@
-// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.0.4
+// LinguaDepth – generate-lesson (Supabase Edge Function), version 1.1.1
+// v1.1.1 (2026-11-20): comment-only change (re-presented for the repo). The code is identical to the deployed v1.1.0 (Supabase version 8).
 // Repo path: supabase/functions/generate-lesson/index.ts  (local copy carries the version suffix)
 // Deploy with JWT verification OFF (the browser calls it directly; access is gated here instead).
 //
-// What it does (Stage A – teaching only):
-//   1. Checks the request comes from our own site and the inputs are valid.
-//   2. Free-trial gate: counts lessons per email in ld_trial_users, claims one lesson BEFORE
-//      generating (compare-and-set) and gives it back if generation fails.
-//   3. Builds the prompt on the server and asks Claude for the frames.
-//   4. Cleans the reply and returns { frames, lessonsUsed } to the browser.
-//   5. Curriculum mode (mode "curriculum"): the lesson comes from a stored brief in ld_curriculum
-//      (Module 1, A1–B1). The server picks the variant (the least-completed one for this learner), and
-//      the frame count comes from the stored row. Actions "progress" and "complete" read and record
-//      ld_progress. Higher levels answer "coming soon".
-//   6. Access codes: TRIAL-FREE uses the email-based free trial (3 lessons). Any other code is looked up
-//      in ld_access_codes (status active, not expired); subscribers have no lesson cap and their
-//      progress is kept under the code. Repeated wrong codes from one address are slowed down.
-//   7. Action "report": saves a Report a Problem submission to ld_reports (5 a minute per address).
+// v1.1.0 (2026-11-19): QuVive bridge. A learner signs in with an emailed link (Supabase Auth, verified email) and
+// every lesson is gated by accounts-grh (service-check): subscribers have no cap, everyone else gets 2 free lessons,
+// counted and spent in accounts-grh. Access codes, TRIAL-FREE, ld_access_codes and ld_trial_users are no longer used.
+// Progress and reports are kept under learner key "user:<email>".
 //
-// Secrets used:  ANTHROPIC_API_KEY (required)
-// Optional:      ANTHROPIC_MODEL, ALLOWED_ORIGINS (comma separated), TRIAL_LIMIT
-// Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to every function automatically;
+// What it does:
+//   1. Checks the request comes from our own site and the inputs are valid.
+//   2. Identity: Authorization header -> callerClient.auth.getUser(); the email must be confirmed.
+//   3. Plan gate: callServiceCheck("check") BEFORE any AI call (counts toward the hourly cap, spends nothing).
+//      After a whole lesson is built, callServiceCheck("spend") uses one free lesson (never for subscribers/founder).
+//      A failed generation spends nothing.
+//   4. Builds the prompt on the server and asks Claude for the frames; cleans the reply.
+//   5. Curriculum mode (mode "curriculum"): the lesson comes from a stored brief in ld_curriculum
+//      (Module 1, A1-B1). The server picks the variant (the least-completed one for this learner).
+//      Actions "progress" and "complete" read and record ld_progress. Higher levels answer "coming soon".
+//   6. Action "report": saves a Report a Problem submission to ld_reports (5 a minute per address).
+//
+// Secrets used:  ANTHROPIC_API_KEY, BRIDGE_SECRET, ACCOUNTS_URL (required)
+// Optional:      ANTHROPIC_MODEL, ALLOWED_ORIGINS (comma separated)
+// Supabase supplies SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY automatically;
 // SB_URL / SB_SERVICE_ROLE_KEY are honoured first if they have been set.
+// Leave the dashboard's "Verify JWT with legacy secret" toggle OFF and re-check it after every redeploy.
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// -- QUVIVE BRIDGE (accounts-grh service-check) ----------------------------
+const SERVICE_ID = "linguadepth";
+
+async function callServiceCheck(action: "check" | "spend", email: string): Promise<{ status: number; body: any }> {
+  const base = Deno.env.get("ACCOUNTS_URL");
+  const secret = Deno.env.get("BRIDGE_SECRET");
+  if (!base || !secret) return { status: 500, body: { allowed: false, reason: "not_configured" } };
+  try {
+    const res = await fetch(base + "/functions/v1/service-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-bridge-secret": secret },
+      body: JSON.stringify({ action, service_id: SERVICE_ID, email }),
+      signal: AbortSignal.timeout(8000),
+    });
+    let body: any = null;
+    try { body = await res.json(); } catch { /* empty */ }
+    return { status: res.status, body };
+  } catch (e) {
+    console.error("[linguadepth-bridge] service-check unreachable:", e);
+    return { status: 502, body: { allowed: false, reason: "check_failed" } };
+  }
+}
+
+// Spend one free lesson after a whole lesson was built. Never throws; a failure is logged (the learner still gets the lesson).
+async function spendTrialUse(email: string): Promise<void> {
+  const r = await callServiceCheck("spend", email);
+  if (r.status !== 200) console.error("[linguadepth-bridge] spend failed:", r.status, JSON.stringify(r.body));
+}
 
 const MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-5-5";
-const TRIAL_LIMIT = parseInt(Deno.env.get("TRIAL_LIMIT") || "3", 10);
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") || "https://linguadepth.netlify.app")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
@@ -179,7 +213,6 @@ Deno.serve(async (req: Request) => {
   let p: Record<string, unknown>;
   try { p = JSON.parse(raw); } catch { return fail(400, "Invalid request body."); }
 
-  const code = str(p.accessCode, 40).toUpperCase();
   const target = str(p.target, 10);
   const source = str(p.source, 10) || "en";
   const cefr = str(p.cefr, 3).toUpperCase();
@@ -187,7 +220,17 @@ Deno.serve(async (req: Request) => {
   const frameCount = Math.min(Math.max(parseInt(String(p.frameCount), 10) || 10, MIN_FRAMES), MAX_FRAMES);
   const purpose = str(p.purpose, 200).replace(/\s+/g, " ").replace(/["“”]/g, "'");
 
-  if (!code) return fail(401, "No access code provided.");
+  // Identity: a signed-in learner with a verified email.
+  const callerClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } },
+  );
+  const { data: { user } } = await callerClient.auth.getUser();
+  if (!user || !user.email || !user.email_confirmed_at) return fail(401, "Please sign in to continue.");
+  const email = user.email.trim().toLowerCase();
+  const learner = `user:${email}`;
+
   if (!LANGS[target] || target === "en" && source === "en") return fail(400, "Please choose a language to learn.");
   if (!LANGS[source]) return fail(400, "Please choose your own language.");
   if (source === target) return fail(400, "The language you are learning must differ from your own.");
@@ -199,40 +242,6 @@ Deno.serve(async (req: Request) => {
     "Content-Type": "application/json",
   };
   const enc = encodeURIComponent;
-  const isTrial = code === "TRIAL-FREE";
-  let email = "";
-  let learner = "";
-  if (isTrial) {
-    email = str(p.trialEmail, 254).toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      return fail(400, "A valid email address is required for the free trial.");
-    }
-    learner = `trial:${email}`;
-  } else {
-    const nowMs = Date.now();
-    const bad = (hits.get(`bad:${ip}`) || []).filter((t) => nowMs - t < 60 * 60 * 1000);
-    if (bad.length >= 10) return fail(429, "Too many attempts. Please try again later.");
-    let row: { status?: string; expires_at?: string | null } | null = null;
-    try {
-      const r = await fetch(`${SB_URL}/rest/v1/ld_access_codes?code=eq.${enc(code)}&select=status,expires_at&limit=1`, { headers: sb });
-      const rows = await r.json();
-      if (!Array.isArray(rows)) throw new Error("code lookup failed");
-      row = rows[0] || null;
-    } catch (err) {
-      console.error("Code lookup error:", err);
-      return fail(502, "Could not process your request. Please try again.");
-    }
-    const valid = !!row && row.status === "active" && (!row.expires_at || new Date(row.expires_at).getTime() > nowMs);
-    if (!valid) {
-      bad.push(nowMs);
-      hits.set(`bad:${ip}`, bad);
-      return fail(401, "Invalid access code.");
-    }
-    learner = `code:${code}`;
-    fetch(`${SB_URL}/rest/v1/ld_access_codes?code=eq.${enc(code)}`, {
-      method: "PATCH", headers: sb, body: JSON.stringify({ last_used_at: new Date().toISOString() }),
-    }).catch(() => {});
-  }
   const mode = str(p.mode, 12);
   const action = str(p.action, 12);
 
@@ -292,11 +301,9 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  if (rateLimited(`ip:${ip}`, isTrial ? 10 : 80, 24 * 60 * 60 * 1000) || rateLimited(`burst:${ip}`, 3, 60 * 1000)) {
+  if (rateLimited(`ip:${ip}`, 80, 24 * 60 * 60 * 1000) || rateLimited(`burst:${ip}`, 3, 60 * 1000)) {
     return fail(429, "Too many requests. Please try again later.");
   }
-
-  const table = `${SB_URL}/rest/v1/ld_trial_users`;
 
   // ── Curriculum: choose the variant and load the stored brief (before any lesson is claimed) ──
   let cur: { title: string; frame_count: number; setting: string; goal: string; brief: string } | null = null;
@@ -330,38 +337,17 @@ Deno.serve(async (req: Request) => {
   }
   const count = cur ? cur.frame_count : frameCount;
 
-  // ── Trial gate: find or create, then claim one lesson (compare-and-set) ──────
-  let used = 0;
-  if (isTrial) try {
-    const up = await fetch(`${table}?on_conflict=email`, {
-      method: "POST",
-      headers: { ...sb, "Prefer": "resolution=merge-duplicates,return=representation" },
-      body: JSON.stringify({ email, last_seen_at: new Date().toISOString() }),
-    });
-    const rows = await up.json();
-    if (!Array.isArray(rows) || rows.length === 0) throw new Error("upsert returned no rows");
-    used = rows[0].lessons_used || 0;
-    if (used >= TRIAL_LIMIT) {
-      return fail(403, `Your ${TRIAL_LIMIT} free lessons are complete. Subscribe to continue.`, { trialComplete: true });
+  // ── Plan gate: accounts-grh decides before any AI money is spent ─────────────
+  const gate = await callServiceCheck("check", email);
+  if (gate.status !== 200 || gate.body?.allowed !== true) {
+    if (gate.body?.reason === "no_access") {
+      return fail(403, "Your free lessons are used. Please subscribe on QuVive to continue.", { trialComplete: true });
     }
-    const claim = await fetch(`${table}?email=eq.${encodeURIComponent(email)}&lessons_used=eq.${used}`, {
-      method: "PATCH",
-      headers: { ...sb, "Prefer": "return=representation" },
-      body: JSON.stringify({ lessons_used: used + 1 }),
-    });
-    const claimed = await claim.json();
-    if (!Array.isArray(claimed) || claimed.length === 0) {
-      return fail(409, "Another lesson is already being prepared. Please wait a moment and try again.");
-    }
-  } catch (err) {
-    console.error("Trial gate error:", err);
+    if (gate.body?.reason === "rate_limited") return fail(429, "Too many requests. Please try again later.");
     return fail(502, "Could not process your request. Please try again.");
   }
-
-  const giveBack = () => !isTrial ? Promise.resolve() :
-    fetch(`${table}?email=eq.${encodeURIComponent(email)}&lessons_used=eq.${used + 1}`, {
-      method: "PATCH", headers: sb, body: JSON.stringify({ lessons_used: used }),
-    }).catch(() => {});
+  const isTrial = gate.body.access !== "subscribed";
+  const triesBefore = typeof gate.body.tries_left === "number" ? gate.body.tries_left : 1;
 
   // ── Generate ────────────────────────────────────────────────────────────────
   try {
@@ -381,7 +367,6 @@ Deno.serve(async (req: Request) => {
     const data = await res.json();
     if (!res.ok) {
       console.error("Anthropic error:", res.status, JSON.stringify(data).slice(0, 500));
-      await giveBack();
       return fail(502, "The lesson could not be prepared. Please try again.");
     }
 
@@ -407,13 +392,15 @@ Deno.serve(async (req: Request) => {
       };
     });
 
+    // A whole lesson is built: now (and only now) spend one free lesson.
+    await spendTrialUse(email);
+
     return reply(200, {
-      frames, ...(isTrial ? { lessonsUsed: used + 1, trialLimit: TRIAL_LIMIT } : { subscriber: true }),
+      frames, ...(isTrial ? { triesLeft: Math.max(0, triesBefore - 1) } : { subscriber: true }),
       ...(cur ? { lesson: { lessonNo, variant: variantUsed, title: cur.title, setting: cur.setting, goal: cur.goal } } : {}),
     });
   } catch (err) {
     console.error("Generation error:", err);
-    await giveBack();
     return fail(502, "The lesson could not be prepared. Please try again.");
   }
 });
