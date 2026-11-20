@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LinguaDepth – Try 3 Free Lessons</title>
+<title>LinguaDepth – Try 2 Free Lessons</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -223,9 +223,8 @@
 
 <div class="wrap">
   <div class="logo-mark">LinguaDepth</div>
-  <h1 class="entry-heading">Try 3 Free Lessons</h1>
-  <p class="entry-blurb">LinguaDepth teaches a language through the one you already speak &ndash; one small, real conversation at a time. Built on the same programmed-learning method as PrecisionSteps Tutorials, each lesson takes you from zero to something you can actually say, in minutes.</p>
-  <div class="trial-badge">3 Free Lessons &ndash; No Credit Card Needed</div>
+  <h1 class="entry-heading">Try 2 Free Lessons</h1>
+  <div class="trial-badge">2 Free Lessons &ndash; No Credit Card Needed</div>
   <div class="divider"></div>
 
   <label class="field-label" for="trialEmail">Your Email Address</label>
@@ -237,7 +236,8 @@
   </div>
 
   <div class="error-msg" id="entryError"></div>
-  <button class="btn-primary" id="beginTrialBtn" disabled>Begin Free Trial &nbsp;&rarr;</button>
+  <button class="btn-primary" id="beginTrialBtn" disabled>Start 2 Free Lessons &nbsp;&rarr;</button>
+  <div class="entry-blurb" id="trialSent" style="display:none;margin:1.4rem 0 0;color:#1f4d50;background:rgba(47,107,111,0.16);border:2px solid #2f6b6f;border-radius:8px;padding:1.2rem 1.4rem;font-size:1.5rem;font-weight:600;line-height:1.5;text-align:center;"></div>
 
   <p class="page-footer" style="margin-top:1.6rem;">Already a Subscriber? <a href="index.html">Sign In Here &nbsp;&rarr;</a></p>
   <p class="page-footer" style="margin-top:0.6rem;">
@@ -245,11 +245,18 @@
   </p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
+  const LD_FN = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
+  const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
   const trialEmail = document.getElementById("trialEmail");
   const ageCheck = document.getElementById("ageCheck");
   const beginTrialBtn = document.getElementById("beginTrialBtn");
   const entryError = document.getElementById("entryError");
+
+  // Already signed in: go straight to the language picker.
+  sb.auth.getSession().then(({ data }) => { if (data && data.session) window.location.replace("picker.html"); });
+  sb.auth.onAuthStateChange((event, session) => { if (event === "SIGNED_IN" && session) window.location.replace("picker.html"); });
 
   function checkEntryReady() {
     const emailLooksValid = /\S+@\S+\.\S+/.test(trialEmail.value.trim());
@@ -259,11 +266,26 @@
   trialEmail.addEventListener("input", () => { entryError.textContent = ""; checkEntryReady(); });
   ageCheck.addEventListener("change", checkEntryReady);
 
-  beginTrialBtn.addEventListener("click", () => {
-    // Keeps the trial email for this browser so the lesson pages can pass it to the
-    // lesson function, which counts free lessons per email on the server.
-    try { localStorage.setItem("ld_trial_email", trialEmail.value.trim().toLowerCase()); } catch (e) {}
-    window.location.href = "picker.html";
+  beginTrialBtn.addEventListener("click", async () => {
+    const email = trialEmail.value.trim().toLowerCase();
+    beginTrialBtn.disabled = true;
+    entryError.textContent = "";
+    // The emailed link confirms the address; free lessons are then counted against it by QuVive.
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: new URL("picker.html", window.location.href).href }
+    });
+    if (error) {
+      entryError.textContent = error.status === 429
+        ? "Too many requests. Please wait a few minutes and try again."
+        : "We couldn\u2019t send the link. Please check the address and try again.";
+      beginTrialBtn.disabled = false;
+      return;
+    }
+    const sent = document.getElementById("trialSent");
+    sent.textContent = "Check your email \u2013 we sent a link to " + email + ". Open it on this device to start your 2 free lessons.";
+    sent.style.display = "block";
+    beginTrialBtn.style.display = "none";
   });
 </script>
 </body>

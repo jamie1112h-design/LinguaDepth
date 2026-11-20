@@ -182,10 +182,16 @@
 
   .success-note {
     color: var(--teal-dark);
-    font-size: 0.92rem;
-    font-style: italic;
-    margin-bottom: 0.8rem;
-    text-align: left;
+    background: var(--teal-mist);
+    border: 2px solid var(--teal);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-style: normal;
+    line-height: 1.5;
+    margin: 1.4rem 0 0.8rem;
+    text-align: center;
   }
 
   .btn-primary {
@@ -256,97 +262,63 @@
 <div class="wrap">
   <div class="logo-mark">LinguaDepth</div>
   <h1 class="key-heading">Begin Your Session</h1>
-  <p class="orient-blurb">LinguaDepth teaches a language through the one you already speak &ndash; one small, real conversation at a time. Built on the same programmed-learning method as PrecisionSteps Tutorials, each lesson takes you from zero to something you can actually say, in minutes.</p>
 
-  <a href="#" class="free-trial-cta" id="freeTrialLink">Try a Free Lesson &nbsp;&rarr;</a>
-  <p class="free-trial-note">No access code needed &middot; No credit card required</p>
+  <a href="free-trial.html" class="free-trial-cta">Try 2 Free Lessons &nbsp;&rarr;</a>
+  <p class="free-trial-note">No credit card required</p>
 
   <div class="subscriber-divider"><span>Already a Subscriber?</span></div>
 
-  <label class="field-label" for="keyInput">Access Code</label>
-  <input type="text" id="keyInput" placeholder="LD-XXXX-XXXX" autocomplete="off" />
-  <div class="error-msg" id="keyError"></div>
-  <button class="btn-primary" id="keySubmitBtn" disabled>Open the Gate &nbsp;&rarr;</button>
-
-  <p class="toggle-link"><a href="#" id="showRecoveryBtn">Already Subscribed? Resend My Code &nbsp;&rarr;</a></p>
-
-  <div id="recoveryForm">
-    <label class="field-label" for="recoveryEmail">Your Email Address</label>
-    <input type="email" id="recoveryEmail" placeholder="you@example.com" autocomplete="email" />
-    <div class="error-msg" id="recoveryError"></div>
-    <div class="success-note" id="recoverySuccess" style="display:none;">If that email is in our system, your code is on its way.</div>
-    <button class="btn-primary" id="recoverySendBtn">Send My Code &nbsp;&rarr;</button>
-    <p class="toggle-link" style="text-align:center;"><a href="#" id="hideRecoveryBtn">Back to Access Code</a></p>
+  <div id="signinForm">
+    <label class="field-label" for="signinEmail">Sign in with your email</label>
+    <input type="email" id="signinEmail" placeholder="you@example.com" autocomplete="email" />
+    <div class="error-msg" id="signinError"></div>
+    <button class="btn-primary" id="signinBtn" disabled>Email Me a Sign-In Link &nbsp;&rarr;</button>
   </div>
+  <div class="success-note" id="signinSent" style="display:none;"></div>
+
+  <p class="orient-blurb" style="max-width:440px;margin:2rem auto 0;text-align:center;">LinguaDepth teaches a language through the one you already speak &ndash; one small, real conversation at a time. Built on the same programmed-learning method as PrecisionSteps Tutorials, each lesson takes you from zero to something you can actually say, in minutes.</p>
 
   <p class="page-footer">
     <a href="privacy.html">Privacy Policy</a>&nbsp;&middot;&nbsp;<a href="terms.html">Terms of Use</a>&nbsp;&middot;&nbsp;<a href="mailto:ask@linguadepth.com">ask@linguadepth.com</a>
   </p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-  const keyInput = document.getElementById("keyInput");
-  const keySubmitBtn = document.getElementById("keySubmitBtn");
-  const keyError = document.getElementById("keyError");
+  const LD_FN = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
+  const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
+  const signinEmail = document.getElementById("signinEmail");
+  const signinBtn = document.getElementById("signinBtn");
+  const signinError = document.getElementById("signinError");
 
-  keyInput.addEventListener("input", () => {
-    keySubmitBtn.disabled = keyInput.value.trim().length === 0;
-    keyError.textContent = "";
+  // Already signed in: go straight to the language picker.
+  sb.auth.getSession().then(({ data }) => { if (data && data.session) window.location.replace("picker.html"); });
+  sb.auth.onAuthStateChange((event, session) => { if (event === "SIGNED_IN" && session) window.location.replace("picker.html"); });
+
+  signinEmail.addEventListener("input", () => {
+    signinBtn.disabled = !/\S+@\S+\.\S+/.test(signinEmail.value.trim());
+    signinError.textContent = "";
   });
 
-  keySubmitBtn.addEventListener("click", async () => {
-    const code = keyInput.value.trim().toUpperCase();
-    if (!code) return;
-    keySubmitBtn.disabled = true;
-    keyError.textContent = "";
-    try {
-      // The code is checked by the lesson service; a good code answers with a progress list.
-      const res = await fetch("https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessCode: code, action: "progress", source: "en", target: "fr-FR", cefr: "A1" })
-      });
-      if (res.ok) {
-        try { localStorage.setItem("ld_access_code", code); } catch (e) {}
-        window.location.href = "picker.html";
-        return;
-      }
-      keyError.textContent = res.status === 429
-        ? "Too many attempts. Please try again later."
-        : "That access code was not recognised. Please check it and try again.";
-    } catch (e) {
-      keyError.textContent = "Something went wrong. Please check your connection and try again.";
-    }
-    keySubmitBtn.disabled = false;
-  });
-
-  document.getElementById("freeTrialLink").addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "free-trial.html";
-  });
-
-  const recoveryForm = document.getElementById("recoveryForm");
-  const showRecoveryBtn = document.getElementById("showRecoveryBtn");
-  const hideRecoveryBtn = document.getElementById("hideRecoveryBtn");
-
-  showRecoveryBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    recoveryForm.style.display = "block";
-  });
-  hideRecoveryBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    recoveryForm.style.display = "none";
-  });
-
-  document.getElementById("recoverySendBtn").addEventListener("click", () => {
-    const email = document.getElementById("recoveryEmail").value.trim();
-    const recoveryError = document.getElementById("recoveryError");
-    if (!email) {
-      recoveryError.textContent = "Enter an email address first.";
+  signinBtn.addEventListener("click", async () => {
+    const email = signinEmail.value.trim().toLowerCase();
+    signinBtn.disabled = true;
+    signinError.textContent = "";
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: new URL("picker.html", window.location.href).href }
+    });
+    if (error) {
+      signinError.textContent = error.status === 429
+        ? "Too many requests. Please wait a few minutes and try again."
+        : "We couldn\u2019t send the link. Please check the address and try again.";
+      signinBtn.disabled = false;
       return;
     }
-    recoveryError.textContent = "";
-    alert("Would send a code-recovery email to: " + email + " (no backend wired yet).");
+    document.getElementById("signinForm").style.display = "none";
+    const sent = document.getElementById("signinSent");
+    sent.textContent = "Check your email \u2013 we sent a sign-in link to " + email + ". Open it on this device to continue.";
+    sent.style.display = "block";
   });
 </script>
 </body>
