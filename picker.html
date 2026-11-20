@@ -526,6 +526,7 @@
 
   <p class="settings-summary" id="settingsSummary">10-frame · B1 lesson</p>
 
+  <div id="trialStatus" style="display:none;margin:0 auto 1.2rem;border-radius:8px;padding:1.1rem 1.4rem;font-size:1.5rem;font-weight:600;line-height:1.5;text-align:center;"></div>
   <button class="btn-primary" id="startBtn">Begin With a Single Lesson &nbsp;&rarr;</button>
   <p class="or-divider">Or You May</p>
   <button class="btn-primary" id="curriculumBtn">Begin With a Pre-Built Curriculum &nbsp;&rarr;</button>
@@ -533,8 +534,8 @@
     <h2 class="info-card-title">About Language Learning Levels</h2>
     <p>CEFR levels describe practical can-do ability across reading, listening, speaking, and writing – not a count of memorised words or rules. This is <strong>self-assessed</strong>: ask yourself "Can I introduce myself and ask basic questions?" (likely A1), "Can I handle familiar situations without much help?" (likely B1), or "Can I discuss complex subjects and understand demanding texts?" (likely B2–C1). It isn't a formal placement test. If your skills are uneven – say, stronger reading than speaking – pick the level matching your weaker skill, unless a future version lets you set levels per skill.</p>
   </div>
-  <a href="#" class="sign-out-link">Manage Subscription</a>
-  <a href="#" class="sign-out-link">Sign Out</a>
+  <a href="https://quvive.com/plans.html" target="_blank" rel="noopener" class="sign-out-link">Manage Subscription</a>
+  <a href="#" class="sign-out-link" id="signOutLink">Sign Out</a>
 </div>
 
 <script>
@@ -680,7 +681,9 @@
   frameSlider.addEventListener("input", updateSummary);
   updateSummary();
 
+  window.ldExhausted = false;
   document.getElementById("startBtn").addEventListener("click", () => {
+    if (window.ldExhausted) { window.open("https://quvive.com/plans.html", "_blank", "noopener"); return; }
     const params = new URLSearchParams({
       source: sourceValue,
       target: targetValue,
@@ -700,6 +703,66 @@
       frames: frameSlider.value
     });
     window.location.href = "curriculum.html?" + params.toString();
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
+  // Free-lesson count, shared between pages for this tab only. Valid for 15 minutes, then the server is the authority again.
+  const PLANS_URL = "https://quvive.com/plans.html";
+  const TRIAL_KEY = "ld_trial";
+  function trialRead(email) {
+    try {
+      const t = JSON.parse(sessionStorage.getItem(TRIAL_KEY) || "null");
+      if (t && t.email === email && typeof t.left === "number" && Date.now() - t.at < 900000) return t.left;
+    } catch (e) {}
+    return null;
+  }
+  function trialWrite(email, left) {
+    try {
+      if (!email || left === null) sessionStorage.removeItem(TRIAL_KEY);
+      else sessionStorage.setItem(TRIAL_KEY, JSON.stringify({ email: email, left: left, at: Date.now() }));
+    } catch (e) {}
+  }
+  async function sessionEmail() {
+    try {
+      const { data } = await sb.auth.getSession();
+      return data && data.session && data.session.user && data.session.user.email ? data.session.user.email.toLowerCase() : null;
+    } catch (e) { return null; }
+  }
+
+  const STATUS_GREEN = "color:#1f4d50;background:rgba(47,107,111,0.16);border:2px solid #2f6b6f;";
+  const STATUS_AMBER = "color:#7a431a;background:#f8ecd9;border:2px solid #d9b27c;";
+  function showTrialStatus(left) {
+    const box = document.getElementById("trialStatus");
+    if (!box || left === null) return false;
+    const base = "display:block;margin:0 auto 1.2rem;border-radius:8px;padding:1.1rem 1.4rem;font-size:1.5rem;font-weight:600;line-height:1.5;text-align:center;";
+    if (left > 0) {
+      box.textContent = left + " free " + (left === 1 ? "lesson" : "lessons") + " remaining.";
+      box.style.cssText = base + STATUS_GREEN;
+    } else {
+      box.textContent = "Your free lessons are used. Subscribe on QuVive to keep learning.";
+      box.style.cssText = base + STATUS_AMBER;
+    }
+    return true;
+  }
+  // Only a signed-in learner reaches the picker; everyone else goes to the sign-in page.
+  sb.auth.getSession().then(({ data }) => {
+    if (!data || !data.session) { window.location.replace("index.html"); return; }
+    const email = data.session.user && data.session.user.email ? data.session.user.email.toLowerCase() : null;
+    const left = email ? trialRead(email) : null;
+    if (showTrialStatus(left) && left === 0) {
+      window.ldExhausted = true;
+      document.getElementById("startBtn").innerHTML = "See Subscriber Plans &nbsp;&rarr;";
+      document.getElementById("curriculumBtn").style.display = "none";
+      const od = document.querySelector(".or-divider"); if (od) od.style.display = "none";
+    }
+  });
+  document.getElementById("signOutLink").addEventListener("click", async (e) => {
+    e.preventDefault();
+    trialWrite(null, null);
+    try { await sb.auth.signOut(); } catch (err) {}
+    window.location.href = "index.html";
   });
 </script>
 </body>

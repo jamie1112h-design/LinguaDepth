@@ -556,6 +556,8 @@
   </div>
 </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
   // Phase 1 item 6: this path reads its settings from real URL params
   // (set by picker.html's "Begin With a Single Lesson" button) rather than
@@ -615,19 +617,38 @@
   let totalFrames = 0;
   let trialNote = "";
 
-  function savedTrialEmail() {
-    try { return (localStorage.getItem("ld_trial_email") || "").trim(); } catch (e) { return ""; }
-  }
+  const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
 
-  function savedCode() {
-    try { return (localStorage.getItem("ld_access_code") || "").trim(); } catch (e) { return ""; }
+  // Free-lesson count, shared between pages for this tab only. Valid for 15 minutes, then the server is the authority again.
+  const PLANS_URL = "https://quvive.com/plans.html";
+  const TRIAL_KEY = "ld_trial";
+  function trialRead(email) {
+    try {
+      const t = JSON.parse(sessionStorage.getItem(TRIAL_KEY) || "null");
+      if (t && t.email === email && typeof t.left === "number" && Date.now() - t.at < 900000) return t.left;
+    } catch (e) {}
+    return null;
   }
-  // A subscriber's access code takes priority; otherwise the free-trial email is used.
-  function credentials() {
-    const c = savedCode();
-    if (c) return { accessCode: c };
-    const e = savedTrialEmail();
-    return e ? { accessCode: "TRIAL-FREE", trialEmail: e } : null;
+  function trialWrite(email, left) {
+    try {
+      if (!email || left === null) sessionStorage.removeItem(TRIAL_KEY);
+      else sessionStorage.setItem(TRIAL_KEY, JSON.stringify({ email: email, left: left, at: Date.now() }));
+    } catch (e) {}
+  }
+  async function sessionEmail() {
+    try {
+      const { data } = await sb.auth.getSession();
+      return data && data.session && data.session.user && data.session.user.email ? data.session.user.email.toLowerCase() : null;
+    } catch (e) { return null; }
+  }
+  // Every call to the lesson service carries the signed-in learner's token; QuVive decides what they may do.
+  async function authHeaders() {
+    const h = { "Content-Type": "application/json" };
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) h["Authorization"] = "Bearer " + data.session.access_token;
+    } catch (e) {}
+    return h;
   }
   // Put the correct answer in a random position, never the same place twice in a row.
   function shuffleAnswers(list) {
@@ -730,9 +751,8 @@
     try {
       await fetch(FUNCTION_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders(),
         body: JSON.stringify({
-          ...(credentials() || {}),
           source: slSource, target: slTarget, cefr: slCefr,
           action: "complete", lessonNo: slLessonNo, variant: lessonVariant
         })
@@ -811,10 +831,9 @@
       try {
         const res = await fetch(FUNCTION_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders(),
           body: JSON.stringify({
-            ...(credentials() || {}),
-            source: slSource, target: slTarget, cefr: slCefr,
+              source: slSource, target: slTarget, cefr: slCefr,
             action: "report", category: chosen,
             note: document.getElementById("reportNote").value,
             path: "curriculum",
@@ -847,11 +866,11 @@
   }
 
   async function loadLesson() {
-    const cred = credentials();
-    if (!cred) {
-      showError("Please Start Your Free Trial",
-        "We need the email address for your free trial before we can prepare a lesson.",
-        "Start Free Trial", () => { window.location.href = "free-trial.html"; });
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess || !sess.session) {
+      showError("Please Sign In",
+        "Please sign in with your email so we can prepare your lesson.",
+        "Sign In", () => { window.location.href = "index.html"; });
       return;
     }
     const ctrl = new AbortController();
@@ -859,10 +878,9 @@
     try {
       const res = await fetch(FUNCTION_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders(),
         signal: ctrl.signal,
         body: JSON.stringify({
-          ...cred,
           source: slSource,
           target: slTarget,
           cefr: slCefr,
@@ -874,9 +892,10 @@
       clearTimeout(timer);
       const data = await res.json().catch(() => ({}));
       if (res.status === 403 && data.trialComplete) {
+        trialWrite(await sessionEmail(), 0);
         showError("Your Free Lessons Are Complete",
-          (data.error && data.error.message) || "You have used all of your free lessons.",
-          "Back to Start", () => { window.location.href = "index.html"; });
+          (data.error && data.error.message) || "Your free lessons are used. Please subscribe on QuVive to continue.",
+          "See Subscriber Plans", () => { window.location.href = "https://quvive.com/plans.html"; });
         return;
       }
       if (res.status === 404 && data.comingSoon) {
@@ -887,8 +906,8 @@
       }
       if (res.status === 401) {
         showError("Please Sign In Again",
-          "Your access code was not accepted. Please enter it again on the home page.",
-          "Go to Home", () => { window.location.href = "index.html"; });
+          "We couldn\u2019t confirm your sign-in. Please sign in again with your email.",
+          "Sign In", () => { window.location.href = "index.html"; });
         return;
       }
       if (!res.ok || !Array.isArray(data.frames) || data.frames.length === 0) {
@@ -898,9 +917,11 @@
       frames = expandCards(shuffleAnswers(data.frames));
       if (data.lesson) { lessonVariant = data.lesson.variant; lessonTitle = data.lesson.title; }
       document.getElementById("badgeFrames").textContent = `Lesson ${slLessonNo} of 6 · ${totalFrames} Frames`;
-      if (typeof data.lessonsUsed === "number" && typeof data.trialLimit === "number") {
-        const left = Math.max(0, data.trialLimit - data.lessonsUsed);
-        trialNote = `${left} free ${left === 1 ? "lesson" : "lessons"} remaining in your trial.`;
+      if (data.subscriber) trialWrite(await sessionEmail(), null);
+      if (typeof data.triesLeft === "number") {
+        const left = data.triesLeft;
+        trialWrite(await sessionEmail(), left);
+        trialNote = `${left} free ${left === 1 ? "lesson" : "lessons"} remaining in your free trial.`;
       }
       currentFrame = 0; selectedOption = null; answered = false;
       document.getElementById("loadingState").style.display = "none";

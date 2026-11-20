@@ -256,6 +256,7 @@
         <li class="lesson-row" data-n="5" data-frames="6"><span class="lesson-num">5</span> Small Talk About the Weather <span class="lesson-frames">6 frames</span></li>
         <li class="lesson-row" data-n="6" data-frames="6"><span class="lesson-num">6</span> Saying Thanks &amp; Parting Well <span class="lesson-frames">6 frames</span></li>
       </ul>
+      <div id="trialStatus" style="display:none;margin:0 auto 1.2rem;border-radius:8px;padding:1.1rem 1.4rem;font-size:1.5rem;font-weight:600;line-height:1.5;text-align:center;"></div>
       <button class="btn-start" id="startModule1">Start Lesson 1 &nbsp;&rarr;</button>
       <p class="lock-note" id="comingSoonNote" style="display:none;">The curriculum for this level is coming soon. Single lessons are available at every level.</p>
     </div>
@@ -286,6 +287,8 @@
   <a href="picker.html" class="btn-secondary">&larr; Change Language</a>
 </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
   // Same code/name map as the picker page (picker_v1_0_5) – kept in sync manually for
   // now since these are two independent static files; once this becomes a
@@ -332,13 +335,64 @@
   }
   const cefr = (params.get("cefr") || "A1").toUpperCase();
   const FUNCTION_URL = "https://uvkljjbvvdrgjbbtybjj.supabase.co/functions/v1/generate-lesson";
+  const sb = supabase.createClient("https://uvkljjbvvdrgjbbtybjj.supabase.co", "sb_publishable_2jKYw4u_MzXIfgv0BxDz1g_N9HIKnY0");
+
+  // Free-lesson count, shared between pages for this tab only. Valid for 15 minutes, then the server is the authority again.
+  const PLANS_URL = "https://quvive.com/plans.html";
+  const TRIAL_KEY = "ld_trial";
+  function trialRead(email) {
+    try {
+      const t = JSON.parse(sessionStorage.getItem(TRIAL_KEY) || "null");
+      if (t && t.email === email && typeof t.left === "number" && Date.now() - t.at < 900000) return t.left;
+    } catch (e) {}
+    return null;
+  }
+  function trialWrite(email, left) {
+    try {
+      if (!email || left === null) sessionStorage.removeItem(TRIAL_KEY);
+      else sessionStorage.setItem(TRIAL_KEY, JSON.stringify({ email: email, left: left, at: Date.now() }));
+    } catch (e) {}
+  }
+  async function sessionEmail() {
+    try {
+      const { data } = await sb.auth.getSession();
+      return data && data.session && data.session.user && data.session.user.email ? data.session.user.email.toLowerCase() : null;
+    } catch (e) { return null; }
+  }
+
+  const STATUS_GREEN = "color:#1f4d50;background:rgba(47,107,111,0.16);border:2px solid #2f6b6f;";
+  const STATUS_AMBER = "color:#7a431a;background:#f8ecd9;border:2px solid #d9b27c;";
+  function showTrialStatus(left) {
+    const box = document.getElementById("trialStatus");
+    if (!box || left === null) return false;
+    const base = "display:block;margin:0 auto 1.2rem;border-radius:8px;padding:1.1rem 1.4rem;font-size:1.5rem;font-weight:600;line-height:1.5;text-align:center;";
+    if (left > 0) {
+      box.textContent = left + " free " + (left === 1 ? "lesson" : "lessons") + " remaining.";
+      box.style.cssText = base + STATUS_GREEN;
+    } else {
+      box.textContent = "Your free lessons are used. Subscribe on QuVive to keep learning.";
+      box.style.cssText = base + STATUS_AMBER;
+    }
+    return true;
+  }
+  // Every call to the lesson service carries the signed-in learner's token; QuVive decides what they may do.
+  async function authHeaders() {
+    const h = { "Content-Type": "application/json" };
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) h["Authorization"] = "Bearer " + data.session.access_token;
+    } catch (e) {}
+    return h;
+  }
   const LAUNCH_LEVELS = ["A1", "A2", "B1"];
   const startBtn = document.getElementById("startModule1");
   const module1 = document.querySelector('.module[data-depth="1"]');
   const module2 = document.querySelector('.module[data-depth="2"]');
   const rows = Array.from(module1.querySelectorAll(".lesson-row"));
 
+  window.ldExhausted = false;
   function startLesson(n) {
+    if (window.ldExhausted) { window.open(PLANS_URL, "_blank", "noopener"); return; }
     const q = new URLSearchParams(params.toString());
     q.set("lessonNo", String(n));
     window.location.href = "lesson.html?" + q.toString();
@@ -373,6 +427,7 @@
       module2.querySelector(".module-eyebrow").textContent = "Module 2 \u00B7 Unlocked";
     }
     startBtn.onclick = () => startLesson(next);
+    if (window.ldExhausted) startBtn.innerHTML = "See Subscriber Plans &nbsp;&rarr;";
   }
 
   if (!LAUNCH_LEVELS.includes(cefr)) {
@@ -391,21 +446,29 @@
       r.addEventListener("click", () => startLesson(n));
       r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startLesson(n); } });
     });
-    let cred = null;
-    try {
-      const code = (localStorage.getItem("ld_access_code") || "").trim();
-      const email = (localStorage.getItem("ld_trial_email") || "").trim();
-      if (code) cred = { accessCode: code };
-      else if (email) cred = { accessCode: "TRIAL-FREE", trialEmail: email };
-    } catch (e) {}
-    if (cred && targetCode) {
-      fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...cred, source: params.get("source") || "en", target: targetCode, cefr: cefr, action: "progress" })
-      }).then(r => r.json()).then(d => { if (d && Array.isArray(d.progress)) applyProgress(d.progress); }).catch(() => {});
+    if (targetCode) {
+      (async () => {
+        try {
+          const headers = await authHeaders();
+          if (!headers.Authorization) return;
+          const r = await fetch(FUNCTION_URL, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ source: params.get("source") || "en", target: targetCode, cefr: cefr, action: "progress" })
+          });
+          const d = await r.json();
+          if (d && Array.isArray(d.progress)) applyProgress(d.progress);
+        } catch (e) { /* progress is a nicety; ignore */ }
+      })();
     }
   }
+  (async () => {
+    const email = await sessionEmail();
+    const left = email ? trialRead(email) : null;
+    if (left === null || startBtn.style.display === "none") return;
+    showTrialStatus(left);
+    if (left === 0) { window.ldExhausted = true; startBtn.innerHTML = "See Subscriber Plans &nbsp;&rarr;"; }
+  })();
 </script>
 </body>
 </html>
